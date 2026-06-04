@@ -11,14 +11,13 @@
 
 <body>
 
-<h2>Calcular KM desde CSV</h2>
+<h2>Calcular KM Siniestros</h2>
 
 <input type="file" id="fileInput">
-
 <br><br>
 
 <button onclick="procesar()">Calcular</button>
-<button onclick="generarExcel()">Generar reporte Excel</button>
+<button onclick="generarExcel()">Generar Excel</button>
 
 <p id="estado"></p>
 
@@ -39,49 +38,41 @@ lon2 + "," + lat2 +
 "?overview=false";
 
 let response = await fetch(url);
-
 let data = await response.json();
 
 if(!data.routes || data.routes.length === 0){
-return {distancia: null};
+return null;
 }
 
-let distancia = data.routes[0].distance / 1000;
+return (data.routes[0].distance / 1000).toFixed(2);
 
-return {
-distancia: parseFloat(distancia.toFixed(2))
-};
-
-}catch(error){
-console.error("Error ruta:", error);
-return {distancia: null};
+}catch(e){
+console.log(e);
+return null;
 }
 
 }
 
-async function procesar(){
+function procesar(){
 
-let fileInput = document.getElementById("fileInput");
+let file = document.getElementById("fileInput").files[0];
 
-if(fileInput.files.length === 0){
-alert("Selecciona un CSV");
+if(!file){
+alert("Selecciona un archivo CSV");
 return;
 }
 
-document.getElementById("estado").textContent =
-"Leyendo archivo...";
-
-let file = fileInput.files[0];
+document.getElementById("estado").textContent = "Leyendo archivo...";
 
 Papa.parse(file, {
 
-header: false,
 skipEmptyLines: true,
-dynamicTyping: true,
 
 complete: async function(results){
 
 let filas = results.data;
+
+console.log("FILAS:", filas);
 
 datosExcel = [];
 
@@ -105,11 +96,10 @@ continue;
 }
 
 let reclamo = row[0];
-
-let lat1 = parseFloat(row[1]);
-let lon1 = parseFloat(row[2]);
-let lat2 = parseFloat(row[3]);
-let lon2 = parseFloat(row[4]);
+let lat1 = Number(row[1]);
+let lon1 = Number(row[2]);
+let lat2 = Number(row[3]);
+let lon2 = Number(row[4]);
 
 if(
 isNaN(lat1) || isNaN(lon1) ||
@@ -119,17 +109,11 @@ continue;
 }
 
 document.getElementById("estado").textContent =
-"Procesando reclamo " + reclamo + " (" + (i+1) + "/" + filas.length + ")";
+"Procesando " + reclamo;
 
-let r = await calcularRuta(lat1, lon1, lat2, lon2);
+let dist = await calcularRuta(lat1, lon1, lat2, lon2);
 
-let dist = r.distancia !== null ? r.distancia : "No disponible";
-
-salida +=
-"Reclamo: " + reclamo + "\n" +
-"Origen: " + lat1 + "," + lon1 + "\n" +
-"Destino: " + lat2 + "," + lon2 + "\n" +
-"Distancia: " + dist + " km\n\n";
+if(!dist) dist = "No disponible";
 
 datosExcel.push([
 reclamo,
@@ -140,12 +124,14 @@ lon2,
 dist
 ]);
 
+salida += reclamo + " → " + dist + " km\n";
+
 }
 
 document.getElementById("resultado").textContent = salida;
 
 document.getElementById("estado").textContent =
-"Calculo terminado. Presiona Generar reporte Excel.";
+"Listo. Genera el Excel.";
 
 }
 
@@ -156,15 +142,14 @@ document.getElementById("estado").textContent =
 function generarExcel(){
 
 if(datosExcel.length <= 1){
-alert("Primero debes calcular las rutas");
+alert("No hay datos para exportar");
 return;
 }
 
 let wb = XLSX.utils.book_new();
-
 let ws = XLSX.utils.aoa_to_sheet(datosExcel);
 
-XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+XLSX.utils.book_append_sheet(wb, ws, "KM_Siniestros");
 
 XLSX.writeFile(wb, "Reporte_KM_Siniestros.xlsx");
 
