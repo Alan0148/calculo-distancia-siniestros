@@ -14,6 +14,9 @@
 <h2>Calcular KM desde CSV</h2>
 
 <input type="file" id="fileInput">
+
+<br><br>
+
 <button onclick="procesar()">Calcular</button>
 <button onclick="generarExcel()">Generar reporte Excel</button>
 
@@ -23,9 +26,11 @@
 
 <script>
 
-let datosExcel=[];
+let datosExcel = [];
 
 async function calcularRuta(lat1, lon1, lat2, lon2){
+
+try{
 
 let url =
 "https://router.project-osrm.org/route/v1/driving/" +
@@ -34,17 +39,23 @@ lon2 + "," + lat2 +
 "?overview=false";
 
 let response = await fetch(url);
+
 let data = await response.json();
 
 if(!data.routes || data.routes.length === 0){
-return {distancia:"No disponible"};
+return {distancia: null};
 }
 
 let distancia = data.routes[0].distance / 1000;
 
 return {
-distancia: distancia.toFixed(2)
+distancia: parseFloat(distancia.toFixed(2))
 };
+
+}catch(error){
+console.error("Error ruta:", error);
+return {distancia: null};
+}
 
 }
 
@@ -57,55 +68,68 @@ alert("Selecciona un CSV");
 return;
 }
 
-document.getElementById("estado").textContent = "Procesando rutas...";
+document.getElementById("estado").textContent =
+"Leyendo archivo...";
 
 let file = fileInput.files[0];
 
-Papa.parse(file,{
+Papa.parse(file, {
 
-delimiter:";",
-skipEmptyLines:true,
+header: false,
+skipEmptyLines: true,
+dynamicTyping: true,
 
 complete: async function(results){
 
 let filas = results.data;
 
-let salida="";
-
-datosExcel=[];
+datosExcel = [];
 
 datosExcel.push([
-"WRECLA",
-"LATITU",
-"LONGIT",
-"LATITU2",
-"LONGIT3",
+"RECLAMO",
+"LATITUD_ORIGEN",
+"LONGITUD_ORIGEN",
+"LATITUD_DESTINO",
+"LONGITUD_DESTINO",
 "DISTANCIA_KM"
 ]);
 
-for(let i=1;i<filas.length;i++){
+let salida = "";
 
-let reclamo = filas[i][0];
+for(let i = 0; i < filas.length; i++){
 
-let lat1 = parseFloat(filas[i][1]);
-let lon1 = parseFloat(filas[i][2]);
-let lat2 = parseFloat(filas[i][3]);
-let lon2 = parseFloat(filas[i][4]);
+let row = filas[i];
 
-if(isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)){
+if(!row || row.length < 5){
+continue;
+}
+
+let reclamo = row[0];
+
+let lat1 = parseFloat(row[1]);
+let lon1 = parseFloat(row[2]);
+let lat2 = parseFloat(row[3]);
+let lon2 = parseFloat(row[4]);
+
+if(
+isNaN(lat1) || isNaN(lon1) ||
+isNaN(lat2) || isNaN(lon2)
+){
 continue;
 }
 
 document.getElementById("estado").textContent =
-"Calculando reclamo " + reclamo + " (" + i + " de " + (filas.length-1) + ")";
+"Procesando reclamo " + reclamo + " (" + (i+1) + "/" + filas.length + ")";
 
-let r = await calcularRuta(lat1,lon1,lat2,lon2);
+let r = await calcularRuta(lat1, lon1, lat2, lon2);
+
+let dist = r.distancia !== null ? r.distancia : "No disponible";
 
 salida +=
-"Reclamo: "+reclamo+"\n"+
-"Origen: "+lat1+","+lon1+"\n"+
-"Destino: "+lat2+","+lon2+"\n"+
-"Distancia: "+r.distancia+" km\n\n";
+"Reclamo: " + reclamo + "\n" +
+"Origen: " + lat1 + "," + lon1 + "\n" +
+"Destino: " + lat2 + "," + lon2 + "\n" +
+"Distancia: " + dist + " km\n\n";
 
 datosExcel.push([
 reclamo,
@@ -113,7 +137,7 @@ lat1,
 lon1,
 lat2,
 lon2,
-r.distancia
+dist
 ]);
 
 }
@@ -131,7 +155,7 @@ document.getElementById("estado").textContent =
 
 function generarExcel(){
 
-if(datosExcel.length===0){
+if(datosExcel.length <= 1){
 alert("Primero debes calcular las rutas");
 return;
 }
