@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Calcular KM Siniestros</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 </head>
@@ -14,6 +13,7 @@
 <h2>Calcular KM Siniestros</h2>
 
 <input type="file" id="fileInput">
+
 <br><br>
 
 <button onclick="procesar()">Calcular</button>
@@ -47,7 +47,7 @@ return null;
 return (data.routes[0].distance / 1000).toFixed(2);
 
 }catch(e){
-console.log(e);
+console.log("Error ruta:", e);
 return null;
 }
 
@@ -58,21 +58,35 @@ function procesar(){
 let file = document.getElementById("fileInput").files[0];
 
 if(!file){
-alert("Selecciona un archivo CSV");
+alert("Selecciona un archivo Excel (.xlsx)");
 return;
 }
 
 document.getElementById("estado").textContent = "Leyendo archivo...";
 
-Papa.parse(file, {
+let reader = new FileReader();
 
-skipEmptyLines: true,
+reader.onload = function(e){
 
-complete: async function(results){
+let data = new Uint8Array(e.target.result);
 
-let filas = results.data;
+let workbook = XLSX.read(data, {type: 'array'});
 
-console.log("FILAS:", filas);
+let sheetName = workbook.SheetNames[0];
+
+let sheet = workbook.Sheets[sheetName];
+
+let filas = XLSX.utils.sheet_to_json(sheet, {header: 1});
+
+procesarFilas(filas);
+
+};
+
+reader.readAsArrayBuffer(file);
+
+}
+
+async function procesarFilas(filas){
 
 datosExcel = [];
 
@@ -109,7 +123,7 @@ continue;
 }
 
 document.getElementById("estado").textContent =
-"Procesando " + reclamo;
+"Procesando reclamo " + reclamo;
 
 let dist = await calcularRuta(lat1, lon1, lat2, lon2);
 
@@ -135,18 +149,15 @@ document.getElementById("estado").textContent =
 
 }
 
-});
-
-}
-
 function generarExcel(){
 
 if(datosExcel.length <= 1){
-alert("No hay datos para exportar");
+alert("Primero debes calcular las rutas");
 return;
 }
 
 let wb = XLSX.utils.book_new();
+
 let ws = XLSX.utils.aoa_to_sheet(datosExcel);
 
 XLSX.utils.book_append_sheet(wb, ws, "KM_Siniestros");
