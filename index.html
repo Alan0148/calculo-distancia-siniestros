@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Calcular KM Siniestros</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+
+<h2>Calcular KM desde CSV</h2>
+
+<input type="file" id="fileInput">
+<button onclick="procesar()">Calcular</button>
+<button onclick="generarExcel()">Generar reporte Excel</button>
+
+<p id="estado"></p>
+
+<pre id="resultado"></pre>
+
+<script>
+
+let datosExcel=[];
+
+async function calcularRuta(lat1, lon1, lat2, lon2){
+
+let url =
+"https://router.project-osrm.org/route/v1/driving/" +
+lon1 + "," + lat1 + ";" +
+lon2 + "," + lat2 +
+"?overview=false";
+
+let response = await fetch(url);
+let data = await response.json();
+
+if(!data.routes || data.routes.length === 0){
+return {distancia:"No disponible"};
+}
+
+let distancia = data.routes[0].distance / 1000;
+
+return {
+distancia: distancia.toFixed(2)
+};
+
+}
+
+async function procesar(){
+
+let fileInput = document.getElementById("fileInput");
+
+if(fileInput.files.length === 0){
+alert("Selecciona un CSV");
+return;
+}
+
+document.getElementById("estado").textContent = "Procesando rutas...";
+
+let file = fileInput.files[0];
+
+Papa.parse(file,{
+
+delimiter:";",
+skipEmptyLines:true,
+
+complete: async function(results){
+
+let filas = results.data;
+
+let salida="";
+
+datosExcel=[];
+
+datosExcel.push([
+"WRECLA",
+"LATITU",
+"LONGIT",
+"LATITU2",
+"LONGIT3",
+"DISTANCIA_KM"
+]);
+
+for(let i=1;i<filas.length;i++){
+
+let reclamo = filas[i][0];
+
+let lat1 = parseFloat(filas[i][1]);
+let lon1 = parseFloat(filas[i][2]);
+let lat2 = parseFloat(filas[i][3]);
+let lon2 = parseFloat(filas[i][4]);
+
+if(isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)){
+continue;
+}
+
+document.getElementById("estado").textContent =
+"Calculando reclamo " + reclamo + " (" + i + " de " + (filas.length-1) + ")";
+
+let r = await calcularRuta(lat1,lon1,lat2,lon2);
+
+salida +=
+"Reclamo: "+reclamo+"\n"+
+"Origen: "+lat1+","+lon1+"\n"+
+"Destino: "+lat2+","+lon2+"\n"+
+"Distancia: "+r.distancia+" km\n\n";
+
+datosExcel.push([
+reclamo,
+lat1,
+lon1,
+lat2,
+lon2,
+r.distancia
+]);
+
+}
+
+document.getElementById("resultado").textContent = salida;
+
+document.getElementById("estado").textContent =
+"Calculo terminado. Presiona Generar reporte Excel.";
+
+}
+
+});
+
+}
+
+function generarExcel(){
+
+if(datosExcel.length===0){
+alert("Primero debes calcular las rutas");
+return;
+}
+
+let wb = XLSX.utils.book_new();
+
+let ws = XLSX.utils.aoa_to_sheet(datosExcel);
+
+XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+
+XLSX.writeFile(wb, "Reporte_KM_Siniestros.xlsx");
+
+}
+
+</script>
+
+</body>
+</html>
