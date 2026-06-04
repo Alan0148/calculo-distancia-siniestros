@@ -46,8 +46,8 @@ return null;
 
 return (data.routes[0].distance / 1000).toFixed(2);
 
-}catch(e){
-console.log("Error ruta:", e);
+}catch(error){
+console.log("Error OSRM:", error);
 return null;
 }
 
@@ -62,7 +62,8 @@ alert("Selecciona un archivo Excel (.xlsx)");
 return;
 }
 
-document.getElementById("estado").textContent = "Leyendo archivo...";
+document.getElementById("estado").textContent =
+"Leyendo archivo...";
 
 let reader = new FileReader();
 
@@ -100,30 +101,39 @@ datosExcel.push([
 ]);
 
 let salida = "";
+let contadorValidos = 0;
 
 for(let i = 0; i < filas.length; i++){
 
 let row = filas[i];
 
-if(!row || row.length < 5){
+if(!row){
 continue;
 }
 
-let reclamo = row[0];
+// Limpieza segura
+let reclamo = (row[0] || "").toString().trim();
 let lat1 = Number(row[1]);
 let lon1 = Number(row[2]);
 let lat2 = Number(row[3]);
 let lon2 = Number(row[4]);
 
+console.log("Fila:", reclamo, lat1, lon1, lat2, lon2);
+
 if(
-isNaN(lat1) || isNaN(lon1) ||
-isNaN(lat2) || isNaN(lon2)
+!reclamo ||
+!isFinite(lat1) ||
+!isFinite(lon1) ||
+!isFinite(lat2) ||
+!isFinite(lon2)
 ){
 continue;
 }
 
+contadorValidos++;
+
 document.getElementById("estado").textContent =
-"Procesando reclamo " + reclamo;
+"Procesando " + reclamo;
 
 let dist = await calcularRuta(lat1, lon1, lat2, lon2);
 
@@ -145,14 +155,16 @@ salida += reclamo + " → " + dist + " km\n";
 document.getElementById("resultado").textContent = salida;
 
 document.getElementById("estado").textContent =
-"Listo. Genera el Excel.";
+"Listo. Registros válidos: " + contadorValidos;
+
+console.log("DATOS EXCEL FINAL:", datosExcel);
 
 }
 
 function generarExcel(){
 
 if(datosExcel.length <= 1){
-alert("Primero debes calcular las rutas");
+alert("No hay datos para exportar");
 return;
 }
 
