@@ -1,183 +1,234 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Calcular KM Siniestros</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KM Asesores de Emergencia</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f9;margin:20px}
+h1{text-align:center}
+.panel,.card,table{background:#fff}
+.panel,.card{padding:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.cards{display:flex;gap:15px;margin:15px 0}
+.card{flex:1;text-align:center}
+.contenedor{display:flex;gap:15px}
+.izq{width:40%}.der{width:60%}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+th{background:#003366;color:#fff}
+button{padding:8px 12px;cursor:pointer}
+.aut{background:#198754;color:#fff;border:none}
+.noaut{background:#dc3545;color:#fff;border:none}
+</style>
 </head>
-
 <body>
 
-<h2>Calcular KM Siniestros</h2>
+<h1>KM ASESORES DE EMERGENCIA</h1>
 
+<div class="panel">
 <input type="file" id="fileInput">
+<button onclick="procesarExcel()">Procesar Archivo</button>
 
-<br><br>
+<select id="cmbAsesor" onchange="filtrarAsesor()">
+<option value="">Seleccione asesor</option>
+</select>
 
-<button onclick="procesar()">Calcular</button>
-<button onclick="generarExcel()">Generar Excel</button>
+<button onclick="generarPDF()">Generar PDF</button>
 
 <p id="estado"></p>
+</div>
 
-<pre id="resultado"></pre>
+<div class="cards">
+<div class="card"><h3>Total Reclamos</h3><h2 id="lblTotal">0</h2></div>
+<div class="card"><h3>Autorizados</h3><h2 id="lblAutorizados">0</h2></div>
+<div class="card"><h3>Total Pago</h3><h2 id="lblPago">Q0</h2></div>
+</div>
+
+<div class="contenedor">
+<div class="izq">
+<h3>Autorizados (>30 KM)</h3>
+<table>
+<thead><tr><th>Reclamo</th><th>Lugar</th><th>KM</th><th>Tipo</th><th>Pago</th><th></th></tr></thead>
+<tbody id="tblAutorizados"></tbody>
+</table>
+</div>
+
+<div class="der">
+<h3>No Autorizados (<=30 KM)</h3>
+<table>
+<thead><tr><th>Reclamo</th><th>Lugar</th><th>KM</th><th></th></tr></thead>
+<tbody id="tblNoAutorizados"></tbody>
+</table>
+</div>
+</div>
 
 <script>
+let registros=[];
+let asesorActual="";
 
-let datosExcel = [];
-
-async function calcularRuta(lat1, lon1, lat2, lon2){
-
+async function calcularRuta(lat1,lon1,lat2,lon2){
 try{
-
-let url =
-"https://router.project-osrm.org/route/v1/driving/" +
-lon1 + "," + lat1 + ";" +
-lon2 + "," + lat2 +
-"?overview=false";
-
-let response = await fetch(url);
-let data = await response.json();
-
-if(!data.routes || data.routes.length === 0){
-return null;
+let url="https://router.project-osrm.org/route/v1/driving/"+lon1+","+lat1+";"+lon2+","+lat2+"?overview=false";
+let r=await fetch(url);
+let d=await r.json();
+if(!d.routes||!d.routes.length)return 0;
+return Number((d.routes[0].distance/1000).toFixed(2));
+}catch(e){return 0;}
 }
 
-return (data.routes[0].distance / 1000).toFixed(2);
+async function procesarExcel(){
+const file=document.getElementById("fileInput").files[0];
+if(!file){alert("Seleccione archivo");return;}
 
-}catch(error){
-console.log("Error OSRM:", error);
-return null;
-}
+registros=[];
+document.getElementById("estado").innerText="Leyendo archivo...";
 
-}
+const data=await file.arrayBuffer();
+const wb=XLSX.read(data,{type:'array'});
+const ws=wb.Sheets[wb.SheetNames[0]];
+const filas=XLSX.utils.sheet_to_json(ws,{header:1});
 
-function procesar(){
+const asesores=new Set();
 
-let file = document.getElementById("fileInput").files[0];
+for(let i=1;i<filas.length;i++){
+let r=filas[i];
+if(!r||!r[0]) continue;
 
-if(!file){
-alert("Selecciona un archivo Excel (.xlsx)");
-return;
-}
-
-document.getElementById("estado").textContent =
-"Leyendo archivo...";
-
-let reader = new FileReader();
-
-reader.onload = function(e){
-
-let data = new Uint8Array(e.target.result);
-
-let workbook = XLSX.read(data, {type: 'array'});
-
-let sheetName = workbook.SheetNames[0];
-
-let sheet = workbook.Sheets[sheetName];
-
-let filas = XLSX.utils.sheet_to_json(sheet, {header: 1});
-
-procesarFilas(filas);
-
+let reg={
+asesor:String(r[0]).trim(),
+reclamo:String(r[1]).trim(),
+lat1:Number(r[2]),
+lon1:Number(r[3]),
+lat2:Number(r[4]),
+lon2:Number(r[5]),
+lugar:String(r[6]||""),
+km:0,
+autorizado:false,
+tipo:"Automático"
 };
 
-reader.readAsArrayBuffer(file);
+document.getElementById("estado").innerText=`Procesando ${i}/${filas.length-1}`;
 
+reg.km=await calcularRuta(reg.lat1,reg.lon1,reg.lat2,reg.lon2);
+reg.autorizado=reg.km>30;
+
+registros.push(reg);
+asesores.add(reg.asesor);
 }
 
-async function procesarFilas(filas){
+let cmb=document.getElementById("cmbAsesor");
+cmb.innerHTML='<option value="">Seleccione asesor</option>';
 
-datosExcel = [];
+[...asesores].sort().forEach(a=>{
+let op=document.createElement("option");
+op.value=a;
+op.textContent=a;
+cmb.appendChild(op);
+});
 
-datosExcel.push([
-"RECLAMO",
-"LATITUD_ORIGEN",
-"LONGITUD_ORIGEN",
-"LATITUD_DESTINO",
-"LONGITUD_DESTINO",
-"DISTANCIA_KM"
-]);
-
-let salida = "";
-let contadorValidos = 0;
-
-for(let i = 0; i < filas.length; i++){
-
-let row = filas[i];
-
-if(!row){
-continue;
+document.getElementById("estado").innerText="Proceso finalizado";
 }
 
-// Limpieza segura
-let reclamo = (row[0] || "").toString().trim();
-let lat1 = Number(row[1]);
-let lon1 = Number(row[2]);
-let lat2 = Number(row[3]);
-let lon2 = Number(row[4]);
+function filtrarAsesor(){
+asesorActual=document.getElementById("cmbAsesor").value;
 
-console.log("Fila:", reclamo, lat1, lon1, lat2, lon2);
+let datos=registros.filter(x=>x.asesor===asesorActual);
 
-if(
-!reclamo ||
-!isFinite(lat1) ||
-!isFinite(lon1) ||
-!isFinite(lat2) ||
-!isFinite(lon2)
-){
-continue;
+let aut=datos.filter(x=>x.autorizado);
+let noaut=datos.filter(x=>!x.autorizado);
+
+document.getElementById("lblTotal").innerText=datos.length;
+document.getElementById("lblAutorizados").innerText=aut.length;
+document.getElementById("lblPago").innerText="Q"+(aut.length*300).toLocaleString();
+
+let ta=document.getElementById("tblAutorizados");
+let tn=document.getElementById("tblNoAutorizados");
+
+ta.innerHTML="";
+tn.innerHTML="";
+
+aut.forEach(r=>{
+ta.innerHTML+=`
+<tr>
+<td>${r.reclamo}</td>
+<td>${r.lugar}</td>
+<td>${r.km}</td>
+<td>${r.tipo}</td>
+<td>Q300</td>
+<td><button class="noaut" onclick="quitar('${r.reclamo}')">←</button></td>
+</tr>`;
+});
+
+noaut.forEach(r=>{
+tn.innerHTML+=`
+<tr>
+<td>${r.reclamo}</td>
+<td>${r.lugar}</td>
+<td>${r.km}</td>
+<td><button class="aut" onclick="autorizar('${r.reclamo}')">→</button></td>
+</tr>`;
+});
 }
 
-contadorValidos++;
-
-document.getElementById("estado").textContent =
-"Procesando " + reclamo;
-
-let dist = await calcularRuta(lat1, lon1, lat2, lon2);
-
-if(!dist) dist = "No disponible";
-
-datosExcel.push([
-reclamo,
-lat1,
-lon1,
-lat2,
-lon2,
-dist
-]);
-
-salida += reclamo + " → " + dist + " km\n";
-
+function autorizar(rec){
+let r=registros.find(x=>x.reclamo===rec);
+if(r){
+r.autorizado=true;
+r.tipo="Manual";
+filtrarAsesor();
+}
 }
 
-document.getElementById("resultado").textContent = salida;
-
-document.getElementById("estado").textContent =
-"Listo. Registros válidos: " + contadorValidos;
-
-console.log("DATOS EXCEL FINAL:", datosExcel);
-
+function quitar(rec){
+let r=registros.find(x=>x.reclamo===rec);
+if(r){
+r.autorizado=false;
+r.tipo="Automático";
+filtrarAsesor();
+}
 }
 
-function generarExcel(){
+async function generarPDF(){
+if(!asesorActual){alert("Seleccione asesor");return;}
 
-if(datosExcel.length <= 1){
-alert("No hay datos para exportar");
-return;
+const {jsPDF}=window.jspdf;
+const pdf=new jsPDF();
+
+let datos=registros.filter(x=>x.asesor===asesorActual && x.autorizado);
+
+let y=20;
+
+pdf.setFontSize(16);
+pdf.text("KM ASESORES DE EMERGENCIA",10,y);
+
+y+=10;
+pdf.setFontSize(11);
+pdf.text("ASESOR: "+asesorActual,10,y);
+
+y+=10;
+pdf.text("RECLAMO | LUGAR | KM | PAGO",10,y);
+
+y+=8;
+
+datos.forEach(r=>{
+pdf.text(`${r.reclamo} | ${r.lugar} | ${r.km} | Q300`,10,y);
+y+=7;
+if(y>270){pdf.addPage();y=20;}
+});
+
+y+=10;
+pdf.text("TOTAL RECLAMOS: "+datos.length,10,y);
+y+=8;
+pdf.text("VALOR UNITARIO: Q300",10,y);
+y+=8;
+pdf.text("TOTAL A PAGAR: Q"+(datos.length*300),10,y);
+
+pdf.save("Reporte_"+asesorActual+".pdf");
 }
-
-let wb = XLSX.utils.book_new();
-
-let ws = XLSX.utils.aoa_to_sheet(datosExcel);
-
-XLSX.utils.book_append_sheet(wb, ws, "KM_Siniestros");
-
-XLSX.writeFile(wb, "Reporte_KM_Siniestros.xlsx");
-
-}
-
 </script>
 
 </body>
