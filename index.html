@@ -4,602 +4,360 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KM Asesores de Emergencia</title>
-
+<!-- Librerías Necesarias -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-
-:root{
-    --azul:#0b3d91;
-    --azul2:#1e5cc8;
-    --verde:#198754;
-    --rojo:#dc3545;
-    --gris:#f4f6f9;
-    --texto:#2c3e50;
-    --blanco:#ffffff;
+:root {
+    --bg-main: #f8fafc;
+    --panel-bg: #ffffff;
+    --primary: #0f172a;
+    --primary-light: #1e293b;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --success: #10b981;
+    --danger: #ef4444;
+    --text-main: #334155;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
 }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+body { background: var(--bg-main); color: var(--text-main); padding: 0 30px 30px 30px; }
+
+/* Encabezado Moderno y Centrado Real */
+header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    margin: 0 -30px 30px -30px; /* Expande la barra de lado a lado del navegador */
+    padding: 35px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+h1 { 
+    color: white; 
+    font-size: 28px; 
+    font-weight: 700; 
+    letter-spacing: 0.5px; 
+    text-transform: uppercase;
+    text-align: center;
 }
 
-body{
-    font-family:'Segoe UI',Tahoma,sans-serif;
-    background:var(--gris);
-    color:var(--texto);
-    padding:25px;
-}
+/* Paneles y Contenedores */
+.panel { background: var(--panel-bg); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(15,23,42,0.04); border: 1px solid var(--border); margin-bottom: 25px; }
+.contenedor { display: flex; gap: 25px; align-items: flex-start; }
+.izq { width: 62%; } .der { width: 38%; }
+.izq, .der { background: var(--panel-bg); padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(15,23,42,0.04); border: 1px solid var(--border); }
+h3 { margin-bottom: 18px; color: var(--primary); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 
-h1{
-    text-align:center;
-    color:white;
-    font-size:32px;
-    margin-bottom:20px;
-}
+/* Controles de Formulario */
+input[type=file] { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: #f1f5f9; font-size: 14px; color: var(--text-main); cursor: pointer; }
+select, .input-num { padding: 11px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); font-size: 14px; color: var(--text-main); outline: none; transition: all 0.2s; }
+select:focus, .input-num:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+select { min-width: 260px; font-weight: 500; }
+.input-num { width: 100%; max-width: 140px; font-weight: 600; text-align: center; background: #f8fafc; }
 
-body::before{
-    content:"";
-    display:block;
-    height:90px;
-    background:linear-gradient(135deg,var(--azul),var(--azul2));
-    position:absolute;
-    top:0;
-    left:0;
-    right:0;
-    z-index:-1;
-}
+/* Botones */
+button { border: none; border-radius: 10px; padding: 11px 20px; font-weight: 600; font-size: 14px; transition: all 0.2s; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+button:active { transform: translateY(0); }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #059669; }
+.btn-secondary { background: #e2e8f0; color: var(--primary); }
+.btn-secondary:hover { background: #cbd5e1; }
 
-.panel{
-    background:white;
-    border-radius:15px;
-    padding:20px;
-    box-shadow:0 5px 20px rgba(0,0,0,.12);
-    margin-bottom:20px;
-}
+/* Acciones en Tablas (Botones Flecha) */
+.aut, .noaut { color: white; width: 34px; height: 34px; border-radius: 8px; padding: 0; justify-content: center; font-size: 16px; }
+.aut { background: var(--success); } .noaut { background: var(--danger); }
 
-input[type=file]{
-    padding:10px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    background:white;
-}
+/* Tarjetas de Indicadores */
+.cards { display: flex; gap: 20px; margin-bottom: 25px; }
+.card { flex: 1; background: var(--panel-bg); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(15,23,42,0.03); border: 1px solid var(--border); position: relative; overflow: hidden; }
+.card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--border); }
+.card:nth-child(1)::before { background: var(--accent); }
+.card:nth-child(2)::before { background: var(--success); }
+.card:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #eab308); }
+.card h3 { color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; justify-content: center; }
+.card h2 { color: var(--primary); font-size: 28px; font-weight: 700; }
 
-select{
-    padding:10px;
-    border-radius:10px;
-    border:1px solid #ddd;
-    min-width:220px;
-}
+/* Estilos de Tabla */
+table { width: 100%; border-collapse: collapse; text-align: left; }
+thead { position: sticky; top: 0; z-index: 10; display: table; width: 100%; table-layout: fixed; }
+th { background: #f1f5f9; color: var(--primary); padding: 14px 16px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); vertical-align: middle; }
+tbody tr { display: table; width: 100%; table-layout: fixed; transition: background 0.15s; }
+tbody tr:nth-child(even) { background: #f8fafc; }
+tbody tr:hover { background: #f0f5ff; }
+#tblAutorizados, #bodyNoAutorizados { display: block; max-height: 480px; overflow-y: auto; }
 
-button{
-    border:none;
-    border-radius:10px;
-    padding:10px 16px;
-    font-weight:600;
-    transition:.3s;
-    cursor:pointer;
-}
+/* Utilidades */
+#estado { margin-top: 15px; padding: 12px 16px; border-radius: 10px; background: #eff6ff; color: var(--accent); font-weight: 600; font-size: 13px; border-left: 4px solid var(--accent); display: none; }
+.controles-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
+.inputs-bottom { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.inputs-bottom label { font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
 
-button:hover{
-    transform:translateY(-2px);
-}
-
-.btn-primary{
-    background:var(--azul);
-    color:white;
-}
-
-.btn-success{
-    background:var(--verde);
-    color:white;
-}
-
-.aut{
-    background:var(--verde);
-    color:white;
-    width:40px;
-    height:40px;
-    border-radius:50%;
-}
-
-.noaut{
-    background:var(--rojo);
-    color:white;
-    width:40px;
-    height:40px;
-    border-radius:50%;
-}
-
-.cards{
-    display:flex;
-    gap:20px;
-    margin-bottom:20px;
-}
-
-.card{
-    flex:1;
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    text-align:center;
-    box-shadow:0 4px 15px rgba(0,0,0,.10);
-    transition:.3s;
-}
-
-.card:hover{
-    transform:translateY(-5px);
-}
-
-.card h3{
-    color:#777;
-    font-size:15px;
-    margin-bottom:10px;
-}
-
-.card h2{
-    color:var(--azul);
-    font-size:32px;
-}
-
-.contenedor{
-    display:flex;
-    gap:20px;
-    align-items:flex-start;
-}
-
-.izq{
-    width:65%;
-}
-
-.der{
-    width:35%;
-}
-
-.izq,
-.der{
-    background:white;
-    padding:20px;
-    border-radius:15px;
-    box-shadow:0 4px 15px rgba(0,0,0,.10);
-}
-
-.izq h3,
-.der h3{
-    margin-bottom:15px;
-    color:var(--azul);
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-thead{
-    position:sticky;
-    top:0;
-    z-index:10;
-}
-
-th{
-    background:var(--azul);
-    color:white;
-    padding:12px;
-    font-size:14px;
-}
-
-td{
-    padding:10px;
-    border-bottom:1px solid #eee;
-}
-
-tbody tr:nth-child(even){
-    background:#fafafa;
-}
-
-tbody tr:hover{
-    background:#eef5ff;
-}
-
-#tblAutorizados,
-#bodyNoAutorizados{
-    display:block;
-    max-height:550px;
-    overflow-y:auto;
-}
-
-#estado{
-    margin-top:15px;
-    padding:10px;
-    border-radius:10px;
-    background:#eaf3ff;
-    color:var(--azul);
-    font-weight:bold;
-}
-
-.controles-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:15px;
-    margin-top:15px;
-}
-
-.inputs-bottom{
-    margin-top:25px;
-    border-top:2px solid #eee;
-    padding-top:20px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:20px;
-}
-
-.input-num{
-    width:120px;
-    padding:10px;
-    border-radius:10px;
-    border:1px solid #ddd;
-    font-size:16px;
-}
-
-.inputs-bottom label{
-    font-size:13px;
-    color:#666;
-    font-weight:600;
-}
-
-@media(max-width:1200px){
-
-    .contenedor{
-        flex-direction:column;
-    }
-
-    .izq,
-    .der{
-        width:100%;
-    }
-
-    .cards{
-        flex-direction:column;
-    }
-}
-
+@media(max-width:1200px) { .contenedor, .cards { flex-direction: column; } .izq, .der { width: 100%; } .inputs-bottom { grid-template-columns: 1fr; } }
 </style>
+</head>
+<body>
+
+<header>
+    <h1>KM ASESORES DE EMERGENCIA</h1>
+</header>
+
+<!-- El resto de tu código HTML y el <script> siguen exactamente igual hacia abajo -->
 
 <h1>KM ASESORES DE EMERGENCIA</h1>
 
 <div class="panel">
-<input type="file" id="fileInput">
-<button class="btn btn-primary" onclick="procesarExcel()">Procesar Archivo</button>
-
-<div class="controles-top">
-  <div style="display:flex;gap:8px;align-items:center;">
-    <select id="cmbAsesor" class="select" onchange="filtrarAsesor()">
-      <option value="">Seleccione asesor</option>
-    </select>
-    <button id="btnFiltrar" class="btn" onclick="filtrarAsesor()">Filtrar</button>
-  </div>
-
-  <div style="margin-left:auto;display:flex;gap:8px;">
-    <button id="btnPdfSel" class="btn btn-success" onclick="generarPDF()">Generar PDF (asesor)</button>
-    <button id="btnPdfAll" class="btn btn-primary" onclick="generarPDFTodos()">Generar PDF (todos)</button>
-  </div>
-</div>
-
-<div style="width:100%;margin-top:10px">
-  <div id="estado" class="info"></div>
-</div>
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <input type="file" id="fileInput">
+        <button class="btn btn-primary" onclick="procesarExcel()">📦 Procesar Archivo</button>
+    </div>
+    
+    <div class="controles-top">
+        <div style="display:flex; gap:10px; align-items:center;">
+            <select id="cmbAsesor" onchange="filtrarAsesor()"><option value="">Seleccione asesor</option></select>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:10px;">
+            <button class="btn btn-success" onclick="generarPDF()">📄 PDF Asesor</button>
+            <button class="btn btn-secondary" onclick="generarPDFTodos()">💼 PDF General</button>
+        </div>
+    </div>
+    <div id="estado"></div>
 </div>
 
 <div class="cards">
-<div class="card"><h3>Total Reclamos</h3><h2 id="lblTotal">0</h2></div>
-<div class="card"><h3>Autorizados</h3><h2 id="lblAutorizados">0</h2></div>
-<div class="card"><h3>Total Pago</h3><h2 id="lblPago">Q0</h2></div>
+    <div class="card"><h3>📋 Total Reclamos</h3><h2 id="lblTotal">0</h2></div>
+    <div class="card"><h3>✅ Autorizados</h3><h2 id="lblAutorizados">0</h2></div>
+    <div class="card"><h3>💰 Total Pago</h3><h2 id="lblPago">Q0</h2></div>
 </div>
 
 <div class="contenedor">
-<div class="izq">
-<h3>Autorizados (>30 KM)</h3>
-<table>
-<thead><tr><th>Reclamo</th><th>Lugar</th><th>KM</th><th>Tipo</th><th>Pago</th><th></th></tr></thead>
-<tbody id="tblAutorizados"></tbody>
-</table>
+    <div class="izq">
+        <h3> Autorizados (&gt;30 KM)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:20%">Reclamo</th>
+                    <th style="width:35%">Lugar</th>
+                    <th style="width:15%">KM</th>
+                    <th style="width:15%">Tipo</th>
+                    <th style="width:15%">Pago</th>
+                    <th style="width:10%"></th>
+                </tr>
+            </thead>
+            <tbody id="tblAutorizados"></tbody>
+        </table>
+    </div>
+    <div class="der">
+        <h3>⚠️ No Autorizados (&lt;=30 KM)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:25%">Reclamo</th>
+                    <th style="width:50%">Lugar</th>
+                    <th style="width:15%">KM</th>
+                    <th style="width:10%"></th>
+                </tr>
+            </thead>
+            <tbody id="bodyNoAutorizados"></tbody>
+        </table>
+        
+        <div class="inputs-bottom">
+            <div>
+                <label>Ajustes Atendidos (Q100 c/u)</label>
+                <input type="number" id="inputAjustes" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
+            </div>
+            <div>
+                <label>Inspecciones Realizadas (Q30 c/u)</label>
+                <input type="number" id="inputInspecciones" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
+            </div>
+        </div>
+    </div>
 </div>
-
-<div class="der">
-<h3>No Autorizados (<=30 KM)</h3>
-<table class="table" id="tblNoAutorizados">
-  <thead><tr><th>Reclamo</th><th>Lugar</th><th style="width:80px">KM</th><th style="width:80px"></th></tr></thead>
-  <tbody id="bodyNoAutorizados"></tbody>
-</table>
-
-<div class="inputs-bottom">
-  <div>
-    <label style="font-size:13px;color:var(--muted)">AJUSTES ATENDIDOS POR ASESOR (Q100 c/u)</label><br>
-    <input type="number" id="inputAjustes" class="input-num" min="0" value="0">
-  </div>
-  <div>
-    <label style="font-size:13px;color:var(--muted)">INSPECCIONES REALIZADAS POR ASESOR (Q30 c/u)</label><br>
-    <input type="number" id="inputInspecciones" class="input-num" min="0" value="0">
-  </div>
-  <div style="margin-left:auto;display:flex;gap:8px;">
-    <button id="btnGuardarAjustes" class="btn btn-primary" onclick="guardarAjustes()">Guardar ajustes</button>
-    <button id="btnResetAjustes" class="btn" onclick="resetAjustes()">Reset</button>
-  </div>
-</div>
-</div>
-</div>
-
-
 
 <script>
-let registros=[];
-let asesorActual="";
-// Diccionario para guardar ajustes e inspecciones adicionales por asesor
-let adicionalesAsesores={}; 
+let registros = [], asesorActual = "", adicionalesAsesores = {};
+const $ = id => document.getElementById(id);
 
-async function calcularRuta(lat1,lon1,lat2,lon2){
-try{
-let url="https://router.project-osrm.org/route/v1/driving/"+lon1+","+lat1+";"+lon2+","+lat2+"?overview=false";
-let r=await fetch(url);
-let d=await r.json();
-if(!d.routes||!d.routes.length)return 0;
-return Number((d.routes[0].distance/1000).toFixed(2));
-}catch(e){return 0;}
+async function procesarExcel() {
+    const file = $("fileInput").files[0];
+    if (!file) return alert("Por favor, seleccione un archivo válido.");
+
+    registros = []; adicionalesAsesores = {};
+    const est = $("estado"); est.style.display = "block"; est.innerText = "⏳ Leyendo archivo Excel...";
+
+    try {
+        const data = await file.arrayBuffer(),
+              wb = XLSX.read(data, {type: 'array'}),
+              filas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}),
+              asesores = new Set();
+
+        for (let i = 1; i < filas.length; i++) {
+            let r = filas[i]; if (!r || !r[0]) continue;
+            est.innerText = `🔄 Procesando rutas: ${i}/${filas.length - 1}`;
+            
+            let url = `https://router.project-osrm.org/route/v1/driving/${r[3]},${r[2]};${r[5]},${r[4]}?overview=false`,
+                res = await fetch(url).catch(()=>null), 
+                d = res ? await res.json() : null,
+                km = d && d.routes && d.routes.length ? Number((d.routes[0].distance / 1000).toFixed(2)) : 0;
+
+            let name = String(r[0]).trim();
+            registros.push({ asesor: name, reclamo: String(r[1]).trim(), lugar: String(r[6] || ""), km, autorizado: km > 30, tipo: "Automático" });
+            asesores.add(name);
+            if (!adicionalesAsesores[name]) adicionalesAsesores[name] = { ajustes: 0, inspecciones: 0, guardado: false };
+        }
+
+        buildSelector(asesores);
+        est.innerText = "✅ Todo procesado con éxito de forma correcta.";
+        setTimeout(() => est.style.display = "none", 4000);
+    } catch(e) {
+        est.innerText = "❌ Error procesando el archivo.";
+        console.error(e);
+    }
 }
 
-async function procesarExcel(){
-const file=document.getElementById("fileInput").files[0];
-if(!file){alert("Seleccione archivo");return;}
-
-registros=[];
-adicionalesAsesores={};
-document.getElementById("estado").innerText="Leyendo archivo...";
-
-const data=await file.arrayBuffer();
-const wb=XLSX.read(data,{type:'array'});
-const ws=wb.Sheets[wb.SheetNames[0]];
-const filas=XLSX.utils.sheet_to_json(ws,{header:1});
-
-const asesores=new Set();
-
-for(let i=1;i<filas.length;i++){
-let r=filas[i];
-if(!r||!r[0]) continue;
-
-let reg={
-asesor:String(r[0]).trim(),
-reclamo:String(r[1]).trim(),
-lat1:Number(r[2]),
-lon1:Number(r[3]),
-lat2:Number(r[4]),
-lon2:Number(r[5]),
-lugar:String(r[6]||""),
-km:0,
-autorizado:false,
-tipo:"Automático"
-};
-
-document.getElementById("estado").innerText=`Procesando ${i}/${filas.length-1}`;
-
-reg.km=await calcularRuta(reg.lat1,reg.lon1,reg.lat2,reg.lon2);
-reg.autorizado=reg.km>30;
-
-registros.push(reg);
-asesores.add(reg.asesor);
+function buildSelector(asesoresSet) {
+    let cmb = $("cmbAsesor");
+    cmb.innerHTML = '<option value="">Seleccione asesor</option>';
+    [...asesoresSet].sort().forEach(a => {
+        let count = registros.filter(x => x.asesor === a && x.autorizado).length;
+        let op = document.createElement("option");
+        op.value = a; op.textContent = `${a} (${count})`;
+        cmb.appendChild(op);
+    });
 }
 
-let cmb=document.getElementById("cmbAsesor");
-cmb.innerHTML='<option value="">Seleccione asesor</option>';
-
-[...asesores].sort().forEach(a=>{
-let op=document.createElement("option");
-op.value=a;
-op.textContent=a;
-cmb.appendChild(op);
-// Inicializar valores extras de cada asesor detectado
-if(!adicionalesAsesores[a]){
-    adicionalesAsesores[a] = { ajustes: 0, inspecciones: 0 };
-}
-});
-
-document.getElementById("estado").innerText="Proceso finalizado";
+function actualizarColoresSelector() {
+    Array.from($("cmbAsesor").options).forEach(op => {
+        if (!op.value) return;
+        let ext = adicionalesAsesores[op.value],
+            count = registros.filter(x => x.asesor === op.value && x.autorizado).length;
+        if (ext && ext.guardado) {
+            op.style.color = "var(--success)"; op.style.fontWeight = "bold";
+            op.textContent = `✓ ${op.value} (${count})`;
+        } else {
+            op.style.color = ""; op.style.fontWeight = "";
+            op.textContent = `${op.value} (${count})`;
+        }
+    });
 }
 
-function filtrarAsesor(){
-asesorActual=document.getElementById("cmbAsesor").value;
+function filtrarAsesor() {
+    asesorActual = $("cmbAsesor").value;
+    if (!asesorActual) {
+        $("lblTotal").innerText = $("lblAutorizados").innerText = 0; $("lblPago").innerText = "Q0";
+        $("tblAutorizados").innerHTML = $("bodyNoAutorizados").innerHTML = "";
+        $("inputAjustes").value = $("inputInspecciones").value = 0; return;
+    }
 
-if(!asesorActual){
-    document.getElementById("lblTotal").innerText=0;
-    document.getElementById("lblAutorizados").innerText=0;
-    document.getElementById("lblPago").innerText="Q0";
-    document.getElementById("tblAutorizados").innerHTML="";
-    document.getElementById("bodyNoAutorizados").innerHTML="";
-    document.getElementById("inputAjustes").value=0;
-    document.getElementById("inputInspecciones").value=0;
-    return;
+    let ext = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 },
+        datos = registros.filter(x => x.asesor === asesorActual),
+        aut = datos.filter(x => x.autorizado), noaut = datos.filter(x => !x.autorizado),
+        total = (aut.length * 300) + (ext.ajustes * 100) + (ext.inspecciones * 30);
+
+    $("inputAjustes").value = ext.ajustes; $("inputInspecciones").value = ext.inspecciones;
+    $("lblTotal").innerText = datos.length; $("lblAutorizados").innerText = aut.length;
+    $("lblPago").innerText = "Q" + total.toLocaleString();
+
+    $("tblAutorizados").innerHTML = aut.map(r => `<tr><td style="width:20%">${r.reclamo}</td><td style="width:35%">${r.lugar}</td><td style="width:15%">${r.km}</td><td style="width:15%">${r.tipo}</td><td style="width:15%">Q300</td><td style="width:10%"><button class="noaut" onclick="cambiarEstado('${r.reclamo}',false)">←</button></td></tr>`).join('');
+    $("bodyNoAutorizados").innerHTML = noaut.map(r => `<tr><td style="width:25%">${r.reclamo}</td><td style="width:50%">${r.lugar}</td><td style="width:15%">${r.km}</td><td style="width:10%"><button class="aut" onclick="cambiarEstado('${r.reclamo}',true)">→</button></td></tr>`).join('');
 }
 
-// Cargar valores extras guardados del asesor en los inputs
-let extras = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 };
-document.getElementById("inputAjustes").value = extras.ajustes;
-document.getElementById("inputInspecciones").value = extras.inspecciones;
+function autoGuardarAjustes() {
+    if (!asesorActual) return;
+    let aj = parseInt($("inputAjustes").value) || 0,
+        insp = parseInt($("inputInspecciones").value) || 0,
+        tieneDatos = (aj > 0 || insp > 0);
 
-let datos=registros.filter(x=>x.asesor===asesorActual);
-
-let aut=datos.filter(x=>x.autorizado);
-let noaut=datos.filter(x=>!x.autorizado);
-
-// Cálculo del total incluyendo reclamos (Q300 c/u), ajustes (Q100 c/u) e inspecciones (Q30 c/u)
-let pagoReclamos = aut.length * 300;
-let pagoAjustes = extras.ajustes * 100;
-let pagoInspecciones = extras.inspecciones * 30;
-let pagoTotalTotal = pagoReclamos + pagoAjustes + pagoInspecciones;
-
-document.getElementById("lblTotal").innerText=datos.length;
-document.getElementById("lblAutorizados").innerText=aut.length;
-document.getElementById("lblPago").innerText="Q"+pagoTotalTotal.toLocaleString();
-
-let ta=document.getElementById("tblAutorizados");
-let tn=document.getElementById("bodyNoAutorizados");
-
-ta.innerHTML="";
-tn.innerHTML="";
-
-aut.forEach(r=>{
-ta.innerHTML+=`
-<tr>
-<td>${r.reclamo}</td>
-<td>${r.lugar}</td>
-<td>${r.km}</td>
-<td>${r.tipo}</td>
-<td>Q300</td>
-<td><button class="noaut" onclick="quitar('${r.reclamo}')">←</button></td>
-</tr>`;
-});
-
-noaut.forEach(r=>{
-tn.innerHTML+=`
-<tr>
-<td>${r.reclamo}</td>
-<td>${r.lugar}</td>
-<td style="width:80px">${r.km}</td>
-<td style="width:80px"><button class="aut" onclick="autorizar('${r.reclamo}')">→</button></td>
-</tr>`;
-});
-}
-
-function guardarAjustes(){
-if(!asesorActual){alert("Seleccione un asesor primero");return;}
-let aj = parseInt(document.getElementById("inputAjustes").value) || 0;
-let insp = parseInt(document.getElementById("inputInspecciones").value) || 0;
-
-adicionalesAsesores[asesorActual] = { ajustes: aj, inspecciones: insp };
-filtrarAsesor();
-alert("Valores adicionales actualizados para " + asesorActual);
-}
-
-function resetAjustes(){
-if(!asesorActual){return;}
-document.getElementById("inputAjustes").value = 0;
-document.getElementById("inputInspecciones").value = 0;
-guardarAjustes();
-}
-
-function autorizar(rec){
-let r=registros.find(x=>x.reclamo===rec);
-if(r){
-r.autorizado=true;
-r.tipo="Manual";
-filtrarAsesor();
-}
-}
-
-function quitar(rec){
-let r=registros.find(x=>x.reclamo===rec);
-if(r){
-r.autorizado=false;
-r.tipo="Automático";
-filtrarAsesor();
-}
-}
-
-async function generarPDF(){
-if(!asesorActual){alert("Seleccione asesor");return;}
-
-const {jsPDF}=window.jspdf;
-const pdf=new jsPDF();
-
-let datos=registros.filter(x=>x.asesor===asesorActual && x.autorizado);
-let extras = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 };
-
-let y=20;
-
-pdf.setFontSize(16);
-pdf.text("KM ASESORES DE EMERGENCIA",10,y);
-
-y+=10;
-pdf.setFontSize(11);
-pdf.text("ASESOR: "+asesorActual,10,y);
-
-y+=10;
-pdf.text("RECLAMO | LUGAR | KM | PAGO",10,y);
-
-y+=8;
-
-datos.forEach(r=>{
-pdf.text(`${r.reclamo} | ${r.lugar} | ${r.km} | Q300`,10,y);
-y+=7;
-if(y>270){pdf.addPage();y=20;}
-});
-
-y+=10;
-pdf.text("TOTAL RECLAMOS AUT.: "+datos.length + " (Q"+(datos.length*300)+")",10,y);
-y+=8;
-pdf.text("AJUSTES ATENDIDOS: "+extras.ajustes + " (Q"+(extras.ajustes*100)+")",10,y);
-y+=8;
-pdf.text("INSPECCIONES REALIZADAS: "+extras.inspecciones + " (Q"+(extras.inspecciones*30)+")",10,y);
-
-let granTotal = (datos.length*300) + (extras.ajustes*100) + (extras.inspecciones*30);
-y+=10;
-pdf.setFontSize(12);
-pdf.text("TOTAL A PAGAR: Q"+granTotal,10,y);
-
-pdf.save("Reporte_"+asesorActual+".pdf");
-}
-
-async function generarPDFTodos(){
-if(registros.length === 0){alert("No hay datos cargados");return;}
-
-const {jsPDF}=window.jspdf;
-const pdf=new jsPDF();
-let asesoresUnicos = [...new Set(registros.map(x=>x.asesor))].sort();
-
-asesoresUnicos.forEach((ase, index) => {
-    if(index > 0) pdf.addPage();
+    adicionalesAsesores[asesorActual] = { ajustes: aj, inspecciones: insp, guardado: tieneDatos };
+    actualizarColoresSelector();
     
-    let y=20;
-    let datos=registros.filter(x=>x.asesor===ase && x.autorizado);
-    let extras = adicionalesAsesores[ase] || { ajustes: 0, inspecciones: 0 };
+    let autCount = registros.filter(x => x.asesor === asesorActual && x.autorizado).length,
+        total = (autCount * 300) + (aj * 100) + (insp * 30);
+    $("lblPago").innerText = "Q" + total.toLocaleString();
+}
 
-    pdf.setFontSize(16);
-    pdf.text("KM ASESORES DE EMERGENCIA - REPORTE GENERAL",10,y);
+function cambiarEstado(rec, est) {
+    let r = registros.find(x => x.reclamo === rec);
+    if (r) { 
+        r.autorizado = est; r.tipo = est ? "Manual" : "Automático"; 
+        let ext = adicionalesAsesores[asesorActual];
+        if(ext) ext.guardado = (ext.ajustes > 0 || ext.inspecciones > 0 || est);
+        actualizarColoresSelector(); filtrarAsesor(); 
+    }
+}
 
-    y+=10;
-    pdf.setFontSize(11);
-    pdf.text("ASESOR: "+ase,10,y);
+function generarPDF() {
+    if (!asesorActual) return alert("Seleccione un asesor.");
+    const doc = new window.jspdf.jsPDF();
+    escribirBloquePDF(doc, asesorActual, registros.filter(x => x.asesor === asesorActual && x.autorizado), adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 });
+    doc.save(`Reporte_${asesorActual}.pdf`);
+}
 
-    y+=10;
-    pdf.text("RECLAMO | LUGAR | KM | PAGO",10,y);
-    y+=8;
+function generarPDFTodos() {
+    if (!registros.length) return alert("No hay datos cargados.");
+    const doc = new window.jspdf.jsPDF();
+    [...new Set(registros.map(x => x.asesor))].sort().forEach((ase, i) => {
+        if (i > 0) doc.addPage();
+        escribirBloquePDF(doc, ase, registros.filter(x => x.asesor === ase && x.autorizado), adicionalesAsesores[ase] || { ajustes: 0, inspecciones: 0 });
+    });
+    doc.save("Reporte_General_Asesores.pdf");
+}
 
-    datos.forEach(r=>{
-        pdf.text(`${r.reclamo} | ${r.lugar} | ${r.km} | Q300`,10,y);
-        y+=7;
-        if(y>270){pdf.addPage();y=20;}
+function escribirBloquePDF(doc, ase, datos, ext) {
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(15, 23, 42);
+    doc.text("KM ASESORES DE EMERGENCIA", 14, 20);
+    
+    doc.setFontSize(11); doc.setFont("Helvetica", "normal"); doc.setTextColor(100, 116, 139);
+    doc.text("REPORTE DE LIQUIDACIÓN DE GASTOS", 14, 26);
+    
+    doc.setDrawColor(226, 232, 240); doc.line(14, 30, 196, 30);
+    
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(15, 23, 42);
+    doc.text("ASESOR ATENDIDO: " + ase.toUpperCase(), 14, 38);
+
+    let rows = datos.map(r => [r.reclamo, r.lugar, `${r.km} KM`, r.tipo, "Q300.00"]);
+    
+    doc.autoTable({
+        startY: 44,
+        head: [['Reclamo', 'Lugar de Emergencia', 'Kilómetros', 'Asignación', 'Monto']],
+        body: rows,
+        theme: 'striped',
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { font: 'Helvetica', fontSize: 10 },
+        columnStyles: { 0: {cellWidth: 25}, 1: {cellWidth: 75}, 2: {cellWidth: 30}, 3: {cellWidth: 25}, 4: {cellWidth: 25} }
     });
 
-    y+=10;
-    pdf.text("TOTAL RECLAMOS AUT.: "+datos.length + " (Q"+(datos.length*300)+")",10,y);
-    y+=8;
-    pdf.text("AJUSTES ATENDIDOS: "+extras.ajustes + " (Q"+(extras.ajustes*100)+")",10,y);
-    y+=8;
-    pdf.text("INSPECCIONES REALIZADAS: "+extras.inspecciones + " (Q"+(extras.inspecciones*30)+")",10,y);
+    let finalY = doc.lastAutoTable.finalY + 15;
+    if (finalY > 230) { doc.addPage(); finalY = 25; }
 
-    let granTotal = (datos.length*300) + (extras.ajustes*100) + (extras.inspecciones*30);
-    y+=10;
-    pdf.setFontSize(12);
-    pdf.text("TOTAL A PAGAR: Q"+granTotal,10,y);
-});
+    doc.setDrawColor(226, 232, 240); doc.line(14, finalY, 196, finalY);
+    finalY += 8;
 
-pdf.save("Reporte_General_Asesores.pdf");
+    doc.setFontSize(10); doc.setFont("Helvetica", "normal"); doc.setTextColor(51, 65, 85);
+    doc.text(`Total Reclamos Autorizados:  ${datos.length}`, 14, finalY);
+    doc.text(`Q ${(datos.length * 300).toLocaleString()}.00`, 150, finalY);
+    
+    doc.text(`Ajustes Extras Atendidos:  ${ext.ajustes} (Q100 c/u)`, 14, finalY += 7);
+    doc.text(`Q ${(ext.ajustes * 100).toLocaleString()}.00`, 150, finalY);
+    
+    doc.text(`Inspecciones Realizadas:  ${ext.inspecciones} (Q30 c/u)`, 14, finalY += 7);
+    doc.text(`Q ${(ext.inspecciones * 30).toLocaleString()}.00`, 150, finalY);
+
+    finalY += 6; doc.setDrawColor(15, 23, 42); doc.line(14, finalY, 196, finalY);
+    
+    doc.setFontSize(13); doc.setFont("Helvetica", "bold"); doc.setTextColor(37, 99, 235);
+    doc.text("TOTAL NETO A PAGAR:", 14, finalY += 10);
+    let granTotal = (datos.length * 300) + (ext.ajustes * 100) + (ext.inspecciones * 30);
+    doc.text(`Q ${granTotal.toLocaleString()}.00`, 150, finalY);
 }
-
-
 </script>
-
 </body>
 </html>
