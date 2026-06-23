@@ -9,37 +9,289 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{font-family:Arial,sans-serif;background:#f4f6f9;margin:20px}
-h1{text-align:center}
-.panel,.card,table{background:#fff}
-.panel,.card{padding:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
-.cards{display:flex;gap:15px;margin:15px 0}
-.card{flex:1;text-align:center}
-.contenedor{display:flex;gap:15px}
-.izq{width:40%}.der{width:60%}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ddd;padding:6px;text-align:center}
-th{background:#003366;color:#fff}
-button{padding:8px 12px;cursor:pointer}
-.aut{background:#198754;color:#fff;border:none}
-.noaut{background:#dc3545;color:#fff;border:none}
+
+:root{
+    --azul:#0b3d91;
+    --azul2:#1e5cc8;
+    --verde:#198754;
+    --rojo:#dc3545;
+    --gris:#f4f6f9;
+    --texto:#2c3e50;
+    --blanco:#ffffff;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Segoe UI',Tahoma,sans-serif;
+    background:var(--gris);
+    color:var(--texto);
+    padding:25px;
+}
+
+h1{
+    text-align:center;
+    color:white;
+    font-size:32px;
+    margin-bottom:20px;
+}
+
+body::before{
+    content:"";
+    display:block;
+    height:90px;
+    background:linear-gradient(135deg,var(--azul),var(--azul2));
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    z-index:-1;
+}
+
+.panel{
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 5px 20px rgba(0,0,0,.12);
+    margin-bottom:20px;
+}
+
+input[type=file]{
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    background:white;
+}
+
+select{
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    min-width:220px;
+}
+
+button{
+    border:none;
+    border-radius:10px;
+    padding:10px 16px;
+    font-weight:600;
+    transition:.3s;
+    cursor:pointer;
+}
+
+button:hover{
+    transform:translateY(-2px);
+}
+
+.btn-primary{
+    background:var(--azul);
+    color:white;
+}
+
+.btn-success{
+    background:var(--verde);
+    color:white;
+}
+
+.aut{
+    background:var(--verde);
+    color:white;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+}
+
+.noaut{
+    background:var(--rojo);
+    color:white;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+}
+
+.cards{
+    display:flex;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.card{
+    flex:1;
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    text-align:center;
+    box-shadow:0 4px 15px rgba(0,0,0,.10);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card h3{
+    color:#777;
+    font-size:15px;
+    margin-bottom:10px;
+}
+
+.card h2{
+    color:var(--azul);
+    font-size:32px;
+}
+
+.contenedor{
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+}
+
+.izq{
+    width:65%;
+}
+
+.der{
+    width:35%;
+}
+
+.izq,
+.der{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,.10);
+}
+
+.izq h3,
+.der h3{
+    margin-bottom:15px;
+    color:var(--azul);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+thead{
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+th{
+    background:var(--azul);
+    color:white;
+    padding:12px;
+    font-size:14px;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #eee;
+}
+
+tbody tr:nth-child(even){
+    background:#fafafa;
+}
+
+tbody tr:hover{
+    background:#eef5ff;
+}
+
+#tblAutorizados,
+#bodyNoAutorizados{
+    display:block;
+    max-height:550px;
+    overflow-y:auto;
+}
+
+#estado{
+    margin-top:15px;
+    padding:10px;
+    border-radius:10px;
+    background:#eaf3ff;
+    color:var(--azul);
+    font-weight:bold;
+}
+
+.controles-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-top:15px;
+}
+
+.inputs-bottom{
+    margin-top:25px;
+    border-top:2px solid #eee;
+    padding-top:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+}
+
+.input-num{
+    width:120px;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    font-size:16px;
+}
+
+.inputs-bottom label{
+    font-size:13px;
+    color:#666;
+    font-weight:600;
+}
+
+@media(max-width:1200px){
+
+    .contenedor{
+        flex-direction:column;
+    }
+
+    .izq,
+    .der{
+        width:100%;
+    }
+
+    .cards{
+        flex-direction:column;
+    }
+}
+
 </style>
-</head>
-<body>
 
 <h1>KM ASESORES DE EMERGENCIA</h1>
 
 <div class="panel">
 <input type="file" id="fileInput">
-<button onclick="procesarExcel()">Procesar Archivo</button>
+<button class="btn btn-primary" onclick="procesarExcel()">Procesar Archivo</button>
 
-<select id="cmbAsesor" onchange="filtrarAsesor()">
-<option value="">Seleccione asesor</option>
-</select>
+<div class="controles-top">
+  <div style="display:flex;gap:8px;align-items:center;">
+    <select id="cmbAsesor" class="select" onchange="filtrarAsesor()">
+      <option value="">Seleccione asesor</option>
+    </select>
+    <button id="btnFiltrar" class="btn" onclick="filtrarAsesor()">Filtrar</button>
+  </div>
 
-<button onclick="generarPDF()">Generar PDF</button>
+  <div style="margin-left:auto;display:flex;gap:8px;">
+    <button id="btnPdfSel" class="btn btn-success" onclick="generarPDF()">Generar PDF (asesor)</button>
+    <button id="btnPdfAll" class="btn btn-primary" onclick="generarPDFTodos()">Generar PDF (todos)</button>
+  </div>
+</div>
 
-<p id="estado"></p>
+<div style="width:100%;margin-top:10px">
+  <div id="estado" class="info"></div>
+</div>
 </div>
 
 <div class="cards">
@@ -59,16 +311,35 @@ button{padding:8px 12px;cursor:pointer}
 
 <div class="der">
 <h3>No Autorizados (<=30 KM)</h3>
-<table>
-<thead><tr><th>Reclamo</th><th>Lugar</th><th>KM</th><th></th></tr></thead>
-<tbody id="tblNoAutorizados"></tbody>
+<table class="table" id="tblNoAutorizados">
+  <thead><tr><th>Reclamo</th><th>Lugar</th><th style="width:80px">KM</th><th style="width:80px"></th></tr></thead>
+  <tbody id="bodyNoAutorizados"></tbody>
 </table>
+
+<div class="inputs-bottom">
+  <div>
+    <label style="font-size:13px;color:var(--muted)">AJUSTES ATENDIDOS POR ASESOR (Q100 c/u)</label><br>
+    <input type="number" id="inputAjustes" class="input-num" min="0" value="0">
+  </div>
+  <div>
+    <label style="font-size:13px;color:var(--muted)">INSPECCIONES REALIZADAS POR ASESOR (Q30 c/u)</label><br>
+    <input type="number" id="inputInspecciones" class="input-num" min="0" value="0">
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;">
+    <button id="btnGuardarAjustes" class="btn btn-primary" onclick="guardarAjustes()">Guardar ajustes</button>
+    <button id="btnResetAjustes" class="btn" onclick="resetAjustes()">Reset</button>
+  </div>
 </div>
 </div>
+</div>
+
+
 
 <script>
 let registros=[];
 let asesorActual="";
+// Diccionario para guardar ajustes e inspecciones adicionales por asesor
+let adicionalesAsesores={}; 
 
 async function calcularRuta(lat1,lon1,lat2,lon2){
 try{
@@ -85,6 +356,7 @@ const file=document.getElementById("fileInput").files[0];
 if(!file){alert("Seleccione archivo");return;}
 
 registros=[];
+adicionalesAsesores={};
 document.getElementById("estado").innerText="Leyendo archivo...";
 
 const data=await file.arrayBuffer();
@@ -128,6 +400,10 @@ let op=document.createElement("option");
 op.value=a;
 op.textContent=a;
 cmb.appendChild(op);
+// Inicializar valores extras de cada asesor detectado
+if(!adicionalesAsesores[a]){
+    adicionalesAsesores[a] = { ajustes: 0, inspecciones: 0 };
+}
 });
 
 document.getElementById("estado").innerText="Proceso finalizado";
@@ -136,17 +412,39 @@ document.getElementById("estado").innerText="Proceso finalizado";
 function filtrarAsesor(){
 asesorActual=document.getElementById("cmbAsesor").value;
 
+if(!asesorActual){
+    document.getElementById("lblTotal").innerText=0;
+    document.getElementById("lblAutorizados").innerText=0;
+    document.getElementById("lblPago").innerText="Q0";
+    document.getElementById("tblAutorizados").innerHTML="";
+    document.getElementById("bodyNoAutorizados").innerHTML="";
+    document.getElementById("inputAjustes").value=0;
+    document.getElementById("inputInspecciones").value=0;
+    return;
+}
+
+// Cargar valores extras guardados del asesor en los inputs
+let extras = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 };
+document.getElementById("inputAjustes").value = extras.ajustes;
+document.getElementById("inputInspecciones").value = extras.inspecciones;
+
 let datos=registros.filter(x=>x.asesor===asesorActual);
 
 let aut=datos.filter(x=>x.autorizado);
 let noaut=datos.filter(x=>!x.autorizado);
 
+// Cálculo del total incluyendo reclamos (Q300 c/u), ajustes (Q100 c/u) e inspecciones (Q30 c/u)
+let pagoReclamos = aut.length * 300;
+let pagoAjustes = extras.ajustes * 100;
+let pagoInspecciones = extras.inspecciones * 30;
+let pagoTotalTotal = pagoReclamos + pagoAjustes + pagoInspecciones;
+
 document.getElementById("lblTotal").innerText=datos.length;
 document.getElementById("lblAutorizados").innerText=aut.length;
-document.getElementById("lblPago").innerText="Q"+(aut.length*300).toLocaleString();
+document.getElementById("lblPago").innerText="Q"+pagoTotalTotal.toLocaleString();
 
 let ta=document.getElementById("tblAutorizados");
-let tn=document.getElementById("tblNoAutorizados");
+let tn=document.getElementById("bodyNoAutorizados");
 
 ta.innerHTML="";
 tn.innerHTML="";
@@ -168,10 +466,27 @@ tn.innerHTML+=`
 <tr>
 <td>${r.reclamo}</td>
 <td>${r.lugar}</td>
-<td>${r.km}</td>
-<td><button class="aut" onclick="autorizar('${r.reclamo}')">→</button></td>
+<td style="width:80px">${r.km}</td>
+<td style="width:80px"><button class="aut" onclick="autorizar('${r.reclamo}')">→</button></td>
 </tr>`;
 });
+}
+
+function guardarAjustes(){
+if(!asesorActual){alert("Seleccione un asesor primero");return;}
+let aj = parseInt(document.getElementById("inputAjustes").value) || 0;
+let insp = parseInt(document.getElementById("inputInspecciones").value) || 0;
+
+adicionalesAsesores[asesorActual] = { ajustes: aj, inspecciones: insp };
+filtrarAsesor();
+alert("Valores adicionales actualizados para " + asesorActual);
+}
+
+function resetAjustes(){
+if(!asesorActual){return;}
+document.getElementById("inputAjustes").value = 0;
+document.getElementById("inputInspecciones").value = 0;
+guardarAjustes();
 }
 
 function autorizar(rec){
@@ -199,6 +514,7 @@ const {jsPDF}=window.jspdf;
 const pdf=new jsPDF();
 
 let datos=registros.filter(x=>x.asesor===asesorActual && x.autorizado);
+let extras = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 };
 
 let y=20;
 
@@ -221,14 +537,68 @@ if(y>270){pdf.addPage();y=20;}
 });
 
 y+=10;
-pdf.text("TOTAL RECLAMOS: "+datos.length,10,y);
+pdf.text("TOTAL RECLAMOS AUT.: "+datos.length + " (Q"+(datos.length*300)+")",10,y);
 y+=8;
-pdf.text("VALOR UNITARIO: Q300",10,y);
+pdf.text("AJUSTES ATENDIDOS: "+extras.ajustes + " (Q"+(extras.ajustes*100)+")",10,y);
 y+=8;
-pdf.text("TOTAL A PAGAR: Q"+(datos.length*300),10,y);
+pdf.text("INSPECCIONES REALIZADAS: "+extras.inspecciones + " (Q"+(extras.inspecciones*30)+")",10,y);
+
+let granTotal = (datos.length*300) + (extras.ajustes*100) + (extras.inspecciones*30);
+y+=10;
+pdf.setFontSize(12);
+pdf.text("TOTAL A PAGAR: Q"+granTotal,10,y);
 
 pdf.save("Reporte_"+asesorActual+".pdf");
 }
+
+async function generarPDFTodos(){
+if(registros.length === 0){alert("No hay datos cargados");return;}
+
+const {jsPDF}=window.jspdf;
+const pdf=new jsPDF();
+let asesoresUnicos = [...new Set(registros.map(x=>x.asesor))].sort();
+
+asesoresUnicos.forEach((ase, index) => {
+    if(index > 0) pdf.addPage();
+    
+    let y=20;
+    let datos=registros.filter(x=>x.asesor===ase && x.autorizado);
+    let extras = adicionalesAsesores[ase] || { ajustes: 0, inspecciones: 0 };
+
+    pdf.setFontSize(16);
+    pdf.text("KM ASESORES DE EMERGENCIA - REPORTE GENERAL",10,y);
+
+    y+=10;
+    pdf.setFontSize(11);
+    pdf.text("ASESOR: "+ase,10,y);
+
+    y+=10;
+    pdf.text("RECLAMO | LUGAR | KM | PAGO",10,y);
+    y+=8;
+
+    datos.forEach(r=>{
+        pdf.text(`${r.reclamo} | ${r.lugar} | ${r.km} | Q300`,10,y);
+        y+=7;
+        if(y>270){pdf.addPage();y=20;}
+    });
+
+    y+=10;
+    pdf.text("TOTAL RECLAMOS AUT.: "+datos.length + " (Q"+(datos.length*300)+")",10,y);
+    y+=8;
+    pdf.text("AJUSTES ATENDIDOS: "+extras.ajustes + " (Q"+(extras.ajustes*100)+")",10,y);
+    y+=8;
+    pdf.text("INSPECCIONES REALIZADAS: "+extras.inspecciones + " (Q"+(extras.inspecciones*30)+")",10,y);
+
+    let granTotal = (datos.length*300) + (extras.ajustes*100) + (extras.inspecciones*30);
+    y+=10;
+    pdf.setFontSize(12);
+    pdf.text("TOTAL A PAGAR: Q"+granTotal,10,y);
+});
+
+pdf.save("Reporte_General_Asesores.pdf");
+}
+
+
 </script>
 
 </body>
