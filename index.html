@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KM Asesores de Emergencia</title>
-<!-- Librerías Necesarias -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -30,7 +29,7 @@ body { background: var(--bg-main); color: var(--text-main); padding: 0 30px 30px
 /* Encabezado Moderno y Centrado Real */
 header {
     background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    margin: 0 -30px 30px -30px; /* Expande la barra de lado a lado del navegador */
+    margin: 0 -30px 30px -30px; 
     padding: 35px 20px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     display: flex;
@@ -49,7 +48,7 @@ h1 {
 /* Paneles y Contenedores */
 .panel { background: var(--panel-bg); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(15,23,42,0.04); border: 1px solid var(--border); margin-bottom: 25px; }
 .contenedor { display: flex; gap: 25px; align-items: flex-start; }
-.izq { width: 62%; } .der { width: 38%; }
+.izq { width: 55%; } .der { width: 45%; }
 .izq, .der { background: var(--panel-bg); padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(15,23,42,0.04); border: 1px solid var(--border); }
 h3 { margin-bottom: 18px; color: var(--primary); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 
@@ -95,6 +94,8 @@ tbody tr:nth-child(even) { background: #f8fafc; }
 tbody tr:hover { background: #f0f5ff; }
 #tblAutorizados, #bodyNoAutorizados { display: block; max-height: 480px; overflow-y: auto; }
 
+.motivo-texto { display: block; font-size: 11px; color: var(--danger); font-weight: 600; margin-top: 4px; }
+
 /* Utilidades */
 #estado { margin-top: 15px; padding: 12px 16px; border-radius: 10px; background: #eff6ff; color: var(--accent); font-weight: 600; font-size: 13px; border-left: 4px solid var(--accent); display: none; }
 .controles-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
@@ -109,10 +110,6 @@ tbody tr:hover { background: #f0f5ff; }
 <header>
     <h1>KM ASESORES DE EMERGENCIA</h1>
 </header>
-
-<!-- El resto de tu código HTML y el <script> siguen exactamente igual hacia abajo -->
-
-<h1>KM ASESORES DE EMERGENCIA</h1>
 
 <div class="panel">
     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
@@ -160,8 +157,8 @@ tbody tr:hover { background: #f0f5ff; }
         <table>
             <thead>
                 <tr>
-                    <th style="width:25%">Reclamo</th>
-                    <th style="width:50%">Lugar</th>
+                    <th style="width:20%">Reclamo</th>
+                    <th style="width:55%">Lugar / Motivo</th>
                     <th style="width:15%">KM</th>
                     <th style="width:10%"></th>
                 </tr>
@@ -199,19 +196,44 @@ async function procesarExcel() {
               filas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}),
               asesores = new Set();
 
-        for (let i = 1; i < filas.length; i++) {
-            let r = filas[i]; if (!r || !r[0]) continue;
-            est.innerText = `🔄 Procesando rutas: ${i}/${filas.length - 1}`;
+        const filasFiltradas = filas.slice(1).filter(r => r && r[0]);
+        const totalFilas = filasFiltradas.length;
+        
+        const tamañoLote = 5; 
+        
+        for (let i = 0; i < totalFilas; i += tamañoLote) {
+            est.innerText = `🔄 Procesando rutas: ${i + 1} de ${totalFilas}...`;
+            const lote = filasFiltradas.slice(i, i + tamañoLote);
             
-            let url = `https://router.project-osrm.org/route/v1/driving/${r[3]},${r[2]};${r[5]},${r[4]}?overview=false`,
-                res = await fetch(url).catch(()=>null), 
-                d = res ? await res.json() : null,
-                km = d && d.routes && d.routes.length ? Number((d.routes[0].distance / 1000).toFixed(2)) : 0;
+            await Promise.all(lote.map(async (r) => {
+                const url = `https://router.project-osrm.org/route/v1/driving/${r[3]},${r[2]};${r[5]},${r[4]}?overview=false`;
+                let km = 0;
+                
+                try {
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const d = await res.json();
+                        if (d && d.routes && d.routes.length) {
+                            km = Number((d.routes[0].distance / 1000).toFixed(2));
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Error en fila de API OSRM, se asignará 0 KM", err);
+                }
 
-            let name = String(r[0]).trim();
-            registros.push({ asesor: name, reclamo: String(r[1]).trim(), lugar: String(r[6] || ""), km, autorizado: km > 30, tipo: "Automático" });
-            asesores.add(name);
-            if (!adicionalesAsesores[name]) adicionalesAsesores[name] = { ajustes: 0, inspecciones: 0, guardado: false };
+                let name = String(r[0]).trim();
+                registros.push({ 
+                    asesor: name, 
+                    reclamo: String(r[1]).trim(), 
+                    lugar: String(r[6] || ""), 
+                    km, 
+                    autorizado: km > 30, 
+                    tipo: "Automático",
+                    motivo: "" 
+                });
+                asesores.add(name);
+                if (!adicionalesAsesores[name]) adicionalesAsesores[name] = { ajustes: 0, inspecciones: 0, guardado: false };
+            }));
         }
 
         buildSelector(asesores);
@@ -266,8 +288,15 @@ function filtrarAsesor() {
     $("lblTotal").innerText = datos.length; $("lblAutorizados").innerText = aut.length;
     $("lblPago").innerText = "Q" + total.toLocaleString();
 
-    $("tblAutorizados").innerHTML = aut.map(r => `<tr><td style="width:20%">${r.reclamo}</td><td style="width:35%">${r.lugar}</td><td style="width:15%">${r.km}</td><td style="width:15%">${r.tipo}</td><td style="width:15%">Q300</td><td style="width:10%"><button class="noaut" onclick="cambiarEstado('${r.reclamo}',false)">←</button></td></tr>`).join('');
-    $("bodyNoAutorizados").innerHTML = noaut.map(r => `<tr><td style="width:25%">${r.reclamo}</td><td style="width:50%">${r.lugar}</td><td style="width:15%">${r.km}</td><td style="width:10%"><button class="aut" onclick="cambiarEstado('${r.reclamo}',true)">→</button></td></tr>`).join('');
+    $("tblAutorizados").innerHTML = aut.map(r => {
+        let textoMotivo = r.motivo ? `<span class="motivo-texto" style="color: var(--success);">Justificación: ${r.motivo}</span>` : '';
+        return `<tr><td style="width:20%">${r.reclamo}</td><td style="width:35%">${r.lugar}${textoMotivo}</td><td style="width:15%">${r.km}</td><td style="width:15%">${r.tipo}</td><td style="width:15%">Q300</td><td style="width:10%"><button class="noaut" onclick="cambiarEstado('${r.reclamo}',false)">←</button></td></tr>`;
+    }).join('');
+    
+    $("bodyNoAutorizados").innerHTML = noaut.map(r => {
+        let textoMotivo = r.motivo ? `<span class="motivo-texto">Motivo: ${r.motivo}</span>` : '';
+        return `<tr><td style="width:20%">${r.reclamo}</td><td style="width:55%">${r.lugar}${textoMotivo}</td><td style="width:15%">${r.km}</td><td style="width:10%"><button class="aut" onclick="cambiarEstado('${r.reclamo}',true)">→</button></td></tr>`;
+    }).join('');
 }
 
 function autoGuardarAjustes() {
@@ -287,6 +316,16 @@ function autoGuardarAjustes() {
 function cambiarEstado(rec, est) {
     let r = registros.find(x => x.reclamo === rec);
     if (r) { 
+        if (est === false) {
+            let motivoIngresado = prompt(`Ingrese el motivo por el cual RECHAZA el reclamo N° ${rec}:`);
+            if (motivoIngresado === null) return; 
+            r.motivo = motivoIngresado.trim() || "No especificado";
+        } else {
+            let motivoAutorizado = prompt(`Ingrese el motivo o justificación para AUTORIZAR el reclamo N° ${rec}:`);
+            if (motivoAutorizado === null) return; 
+            r.motivo = motivoAutorizado.trim() || "Autorizado manualmente";
+        }
+
         r.autorizado = est; r.tipo = est ? "Manual" : "Automático"; 
         let ext = adicionalesAsesores[asesorActual];
         if(ext) ext.guardado = (ext.ajustes > 0 || ext.inspecciones > 0 || est);
@@ -297,7 +336,7 @@ function cambiarEstado(rec, est) {
 function generarPDF() {
     if (!asesorActual) return alert("Seleccione un asesor.");
     const doc = new window.jspdf.jsPDF();
-    escribirBloquePDF(doc, asesorActual, registros.filter(x => x.asesor === asesorActual && x.autorizado), adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 });
+    escribirBloquePDF(doc, asesorActual, registros.filter(x => x.asesor === asesorActual), adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 });
     doc.save(`Reporte_${asesorActual}.pdf`);
 }
 
@@ -306,12 +345,13 @@ function generarPDFTodos() {
     const doc = new window.jspdf.jsPDF();
     [...new Set(registros.map(x => x.asesor))].sort().forEach((ase, i) => {
         if (i > 0) doc.addPage();
-        escribirBloquePDF(doc, ase, registros.filter(x => x.asesor === ase && x.autorizado), adicionalesAsesores[ase] || { ajustes: 0, inspecciones: 0 });
+        escribirBloquePDF(doc, ase, registros.filter(x => x.asesor === ase), adicionalesAsesores[ase] || { ajustes: 0, inspecciones: 0 });
     });
     doc.save("Reporte_General_Asesores.pdf");
 }
 
 function escribirBloquePDF(doc, ase, datos, ext) {
+    // Encabezado Principal
     doc.setFont("Helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(15, 23, 42);
     doc.text("KM ASESORES DE EMERGENCIA", 14, 20);
     
@@ -323,27 +363,67 @@ function escribirBloquePDF(doc, ase, datos, ext) {
     doc.setFont("Helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(15, 23, 42);
     doc.text("ASESOR ATENDIDO: " + ase.toUpperCase(), 14, 38);
 
-    let rows = datos.map(r => [r.reclamo, r.lugar, `${r.km} KM`, r.tipo, "Q300.00"]);
-    
+    let currentY = 44;
+
+    // Separar los registros en Autorizados y Rechazados
+    let autorizados = datos.filter(x => x.autorizado);
+    let rechazados = datos.filter(x => !x.autorizado);
+
+    // --- TABLA 1: RECLAMOS AUTORIZADOS ---
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(16, 185, 129); // Color Éxito
+    doc.text("RECLAMOS AUTORIZADOS", 14, currentY);
+    currentY += 4;
+
+    let rowsAut = autorizados.map(r => {
+        let lugarTexto = r.lugar;
+        if (r.motivo) lugarTexto += `\n(Justificación: ${r.motivo})`;
+        return [r.reclamo, lugarTexto, `${r.km} KM`, r.tipo, "Q300.00"];
+    });
+
     doc.autoTable({
-        startY: 44,
-        head: [['Reclamo', 'Lugar de Emergencia', 'Kilómetros', 'Asignación', 'Monto']],
-        body: rows,
+        startY: currentY,
+        head: [['Reclamo', 'Lugar / Observaciones', 'Kilómetros', 'Asignación', 'Monto']],
+        body: rowsAut.length ? rowsAut : [['-', 'No existen reclamos autorizados para este asesor.', '-', '-', '-']],
         theme: 'striped',
-        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
-        styles: { font: 'Helvetica', fontSize: 10 },
+        headStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3 },
         columnStyles: { 0: {cellWidth: 25}, 1: {cellWidth: 75}, 2: {cellWidth: 30}, 3: {cellWidth: 25}, 4: {cellWidth: 25} }
     });
 
-    let finalY = doc.lastAutoTable.finalY + 15;
-    if (finalY > 230) { doc.addPage(); finalY = 25; }
+    currentY = doc.lastAutoTable.finalY + 12;
+
+    // --- TABLA 2: RECLAMOS RECHAZADOS ---
+    if (currentY > 230) { doc.addPage(); currentY = 25; }
+    
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(239, 68, 68); // Color Peligro
+    doc.text("RECLAMOS RECHAZADOS / NO AUTORIZADOS", 14, currentY);
+    currentY += 4;
+
+    let rowsRech = rechazados.map(r => {
+        let motivoTexto = r.motivo ? r.motivo : "Kilometraje menor o igual a 30 KM";
+        return [r.reclamo, `${r.lugar}\n(Motivo Rechazo: ${motivoTexto})`, `${r.km} KM`, "Automático", "Q0.00"];
+    });
+
+    doc.autoTable({
+        startY: currentY,
+        head: [['Reclamo', 'Lugar / Motivo de Rechazo', 'Kilómetros', 'Asignación', 'Monto']],
+        body: rowsRech.length ? rowsRech : [['-', 'No existen reclamos rechazados para este asesor.', '-', '-', '-']],
+        theme: 'striped',
+        headStyles: { fillColor: [239, 68, 68], textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3 },
+        columnStyles: { 0: {cellWidth: 25}, 1: {cellWidth: 75}, 2: {cellWidth: 30}, 3: {cellWidth: 25}, 4: {cellWidth: 25} }
+    });
+
+    // --- BLOQUE DE TOTALES Y FIRMAS ---
+    let finalY = doc.lastAutoTable.finalY + 12;
+    if (finalY > 220) { doc.addPage(); finalY = 25; }
 
     doc.setDrawColor(226, 232, 240); doc.line(14, finalY, 196, finalY);
     finalY += 8;
 
     doc.setFontSize(10); doc.setFont("Helvetica", "normal"); doc.setTextColor(51, 65, 85);
-    doc.text(`Total Reclamos Autorizados:  ${datos.length}`, 14, finalY);
-    doc.text(`Q ${(datos.length * 300).toLocaleString()}.00`, 150, finalY);
+    doc.text(`Total Reclamos Autorizados:  ${autorizados.length}`, 14, finalY);
+    doc.text(`Q ${(autorizados.length * 300).toLocaleString()}.00`, 150, finalY);
     
     doc.text(`Ajustes Extras Atendidos:  ${ext.ajustes} (Q100 c/u)`, 14, finalY += 7);
     doc.text(`Q ${(ext.ajustes * 100).toLocaleString()}.00`, 150, finalY);
@@ -355,7 +435,7 @@ function escribirBloquePDF(doc, ase, datos, ext) {
     
     doc.setFontSize(13); doc.setFont("Helvetica", "bold"); doc.setTextColor(37, 99, 235);
     doc.text("TOTAL NETO A PAGAR:", 14, finalY += 10);
-    let granTotal = (datos.length * 300) + (ext.ajustes * 100) + (ext.inspecciones * 30);
+    let granTotal = (autorizados.length * 300) + (ext.ajustes * 100) + (ext.inspecciones * 30);
     doc.text(`Q ${granTotal.toLocaleString()}.00`, 150, finalY);
 }
 </script>
