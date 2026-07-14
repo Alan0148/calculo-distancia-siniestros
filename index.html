@@ -27,12 +27,12 @@
     --text-inverse: #dbe4f0;
     --border: #e1e6ee;
 
-    --signal: #2563eb;      /* Azul corporativo elegante */
-    --signal-dark: #1d4ed8;
-    --route: #0e9e93;       /* Teal ruta / OSRM */
+    --signal: #1e40af;      /* azul corporativo elegante — antes naranja */
+    --signal-dark: #1e3a8a;
+    --route: #0e9e93;       /* teal ruta / OSRM */
     --route-dark: #0b8078;
-    --caution: #ffc93c;     /* Amarillo señalización */
-    --success: #17a673;
+    --caution: #ffc93c;     /* amarillo señalización */
+    --success: #10b981;     /* verde vibrante para estados activos y en vivo */
     --danger: #e5384f;
 
     --radius: 14px;
@@ -51,44 +51,43 @@ body {
 /* ===================== HEADER / CONSOLA DE DESPACHO ===================== */
 header.dispatch {
     position: relative;
-    margin: 0 -30px 26px -30px;
-    background: linear-gradient(135deg, var(--asphalt) 0%, var(--asphalt-2) 65%, var(--asphalt-soft) 100%);
-    padding: 30px 34px 26px 34px;
+    margin: 0 -28px 26px -28px;
+    background: linear-gradient(125deg, var(--asphalt) 0%, var(--asphalt-2) 65%, var(--asphalt-soft) 100%);
+    padding: 30px 34px 24px 34px;
     overflow: hidden;
-    border-bottom: 1px solid var(--border);
 }
 .hazard-strip {
-    position: absolute; top: 0; left: 0; right: 0; height: 4px;
-    background: var(--signal); /* Barra superior azul corporativo fijo */
+    position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: repeating-linear-gradient(45deg, var(--signal) 0 16px, #0a1119 16px 32px);
 }
 .dispatch-top {
-    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+    display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;
 }
 .brandblock { display: flex; align-items: center; gap: 14px; }
 .brand-tag {
-    width: 44px; height: 44px; border-radius: 10px;
-    background: var(--signal); /* Fondo azul */
+    width: 46px; height: 46px; border-radius: 10px;
+    background: var(--signal);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Bebas Neue'; color: white; font-size: 20px; letter-spacing: 1px;
-    box-shadow: 0 4px 10px rgba(37,99,235,0.15);
+    font-family: 'Bebas Neue'; color: #ffffff; font-size: 20px; letter-spacing: 1px;
+    box-shadow: 0 0 0 3px rgba(30,64,175,0.25);
 }
 h1 {
-    color: white;
+    color: var(--text-inverse);
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 34px; letter-spacing: 2px; line-height: 1;
+    font-size: 34px; letter-spacing: 3px; line-height: 1;
     text-transform: uppercase;
 }
 .subtitle {
-    color: #94a3b8; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #93a2b8; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
     margin-top: 4px; font-weight: 600;
 }
 .live-box {
     display: flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
     padding: 8px 14px; border-radius: 999px;
 }
 .live-dot {
-    width: 9px; height: 9px; border-radius: 50%; background: var(--route); /* Punto verde en vivo */
+    width: 9px; height: 9px; border-radius: 50%; background: var(--success);
     box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
     animation: pulse 1.8s infinite;
 }
@@ -97,7 +96,7 @@ h1 {
     70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
     100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
 }
-#reloj { color: white; font-size: 12px; letter-spacing: 1px; font-weight: 600; }
+#reloj { color: var(--text-inverse); font-size: 12px; letter-spacing: 1px; }
 
 /* ===================== PANELES ===================== */
 .panel, .izq, .der, .mapa-panel {
@@ -151,7 +150,7 @@ button:active { transform: translateY(0); }
 .aut { background: var(--success); } .noaut { background: var(--danger); }
 
 #estado {
-    margin-top: 14px; padding: 11px 16px; border-radius: 10px; background: #fff3ec;
+    margin-top: 14px; padding: 11px 16px; border-radius: 10px; background: #eff6ff;
     color: var(--signal-dark); font-weight: 700; font-size: 13px; display: none; border-left: 4px solid var(--signal);
 }
 
@@ -255,7 +254,7 @@ tbody tr:hover { background: #f6f9fc; }
             <div class="brand-tag">KM</div>
             <div>
                 <h1>Asesores de Emergencia</h1>
-                <div class="subtitle">Seguros el Roble</div>
+                <div class="subtitle">Centro de despacho · liquidación de rutas</div>
             </div>
         </div>
         <div class="live-box">
@@ -284,7 +283,7 @@ tbody tr:hover { background: #f6f9fc; }
 
     <div style="margin-top:22px;">
         <div class="carrusel-header">
-            <h3 style="margin-bottom:0;"> Asesores de Emergencia</h3>
+            <h3 style="margin-bottom:0;">🧭 Asesores en ruta</h3>
         </div>
         <div class="carrusel-wrap" id="carrusel"></div>
     </div>
@@ -298,7 +297,7 @@ tbody tr:hover { background: #f6f9fc; }
 
 <div class="mapa-panel">
     <div class="mapa-cabecera">
-        <h3 style="margin-bottom:0;">Ruta del reclamo</h3>
+        <h3 style="margin-bottom:0;">🗺️ Ruta del reclamo</h3>
         <div class="mapa-readout" id="mapaReadout" style="display:none;">
             <div><span class="etiqueta">Reclamo</span><span class="valor mono" id="roReclamo">-</span></div>
             <div><span class="etiqueta">Distancia</span><span class="valor km mono" id="roKm">0 KM</span></div>
@@ -359,6 +358,56 @@ tbody tr:hover { background: #f6f9fc; }
     </div>
 </div>
 
+<div class="panel" id="panelResumen">
+    <h3>📑 Resumen para tiempo extraordinario (mismo formato de planilla)</h3>
+    <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:18px; max-width:720px;">
+        Genera el PDF consolidado de todos los asesores cargados, con el mismo diseño de la planilla oficial
+        "Reporte de Siniestro para Cálculo de Tiempo Extraordinario — La Interamericana De Ajustes, S.A.".
+    </p>
+
+    <div class="inputs-bottom" style="grid-template-columns: repeat(4, 1fr); margin-top:0; border-top:none; padding-top:0;">
+        <div>
+            <label>No. de reporte</label>
+            <input type="text" id="resNoReporte" class="input-num" style="max-width:100%;" value="01">
+        </div>
+        <div>
+            <label>Del</label>
+            <input type="date" id="resFechaDesde" class="input-num" style="max-width:100%;">
+        </div>
+        <div>
+            <label>Al</label>
+            <input type="date" id="resFechaHasta" class="input-num" style="max-width:100%;">
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="generarResumenPDF()">📑 Descargar resumen PDF</button>
+        </div>
+    </div>
+
+    <div class="inputs-bottom" style="grid-template-columns: repeat(3, 1fr);">
+        <div>
+            <label>Elaborado por (nombre / cargo)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="resElaboradoNombre" class="input-num" style="max-width:100%; text-align:left;" value="Rudy Perez">
+                <input type="text" id="resElaboradoCargo" class="input-num" style="max-width:100%; text-align:left;" value="Coordinador Emergencias Automovil">
+            </div>
+        </div>
+        <div>
+            <label>Autorizado por 1 (nombre / cargo)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="resAutNombre1" class="input-num" style="max-width:100%; text-align:left;" value="Alvaro Arreaza">
+                <input type="text" id="resAutCargo1" class="input-num" style="max-width:100%; text-align:left;" value="Sub.Gerente Area Tecnica">
+            </div>
+        </div>
+        <div>
+            <label>Autorizado por 2 (nombre / cargo)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="resAutNombre2" class="input-num" style="max-width:100%; text-align:left;" value="Cristian Arias">
+                <input type="text" id="resAutCargo2" class="input-num" style="max-width:100%; text-align:left;" value="Jefe Emergencia Automovil">
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let registros = [], asesorActual = "", adicionalesAsesores = {};
 let mapaLeaflet = null, capaRuta = null, marcadorInicio = null, marcadorFin = null;
@@ -383,14 +432,51 @@ function obtenerPuntoSalida(asesor) {
     return PUNTOS_SALIDA[clave] || PUNTO_CAPITAL;
 }
 
+/* ---------- Catálogo de códigos corporativos (roster oficial "La Interamericana") ---------- */
+function normalizarNombre(s) {
+    return String(s || "").trim().toUpperCase().replace(/\s+/g, ' ');
+}
+
+const ROSTER_ASESORES = [
+    { cod: '20206', nombre: 'Nelson Melendez' },
+    { cod: '26848', nombre: 'Marco Surque' },
+    { cod: '24349', nombre: 'Christian Garcia' },
+    { cod: '29353', nombre: 'Julio Marin' },
+    { cod: '23062', nombre: 'Alvaro Choy' },
+    { cod: '27705', nombre: 'Marvin Del Cid' },
+    { cod: '27708', nombre: 'Francisco Morales' },
+    { cod: '23031', nombre: 'Gary Sipac' },
+    { cod: '58385', nombre: 'Yocimar Pineda' },
+    { cod: '55309', nombre: 'Carlos Zapata' },
+    { cod: '38079', nombre: 'Sergio Estuardo de Leon' },
+    { cod: '52773', nombre: 'Miguel Corea' },
+    { cod: '47602', font: 'sans-serif', nombre: 'Luis Navichoc' },
+    { cod: '51988', nombre: 'Helber Archila' },
+    { cod: '57012', nombre: 'Alejandro Lopez' },
+    { cod: '61176', nombre: 'Franklin Gomez' },
+    { cod: '55802', nombre: 'Diego Gonzalez' },
+    { cod: '41035', nombre: 'Sergio Enriquez' },
+    { cod: '21545', nombre: 'Ruben Pamal' },
+    { cod: '39441', nombre: 'Raul Espinoza' },
+    { cod: '20219', nombre: 'Julio Giron' },
+    { cod: '36929', nombre: 'Walter Morataya' },
+    { cod: '74133', nombre: 'Hector Guerra' },
+    { cod: '22442', nombre: 'Geremias Reyes' },
+    { cod: '78149', nombre: 'Dany Puac' },
+    { cod: '83119', nombre: 'Josue Claveria' },
+    { cod: '83327', nombre: 'Mynor Ramirez' },
+    { cod: '20466', nombre: 'Joaquin Lopez' }
+];
+
 /* ---------- Reloj de consola ---------- */
 function tickReloj() {
     const d = new Date();
     $("reloj").textContent = d.toLocaleTimeString('es-GT', { hour12: false });
 }
 setInterval(tickReloj, 1000); tickReloj();
+inicializarFechasResumen();
 
-/* ---------- Utilidades de datos (sin cambios de lógica) ---------- */
+/* ---------- Utilidades de datos ---------- */
 function formatearFechaExcel(valor) {
     if (valor === undefined || valor === null) return "";
     let s = String(valor).trim();
@@ -417,7 +503,7 @@ async function procesarExcel() {
 
     registros = []; adicionalesAsesores = {};
     ocultarMapa();
-    const est = $("estado"); est.style.display = "block"; est.innerText = "VERIFICANDO DOCUMENTO";
+    const est = $("estado"); est.style.display = "block"; est.innerText = "⏳ Leyendo y mapeando filas del Excel...";
 
     try {
         const data = await file.arrayBuffer();
@@ -546,7 +632,7 @@ function actualizarColoresSelector() {
     });
 }
 
-/* ---------- Filtro principal (misma lógica de negocio) ---------- */
+/* ---------- Filtro principal ---------- */
 function filtrarAsesor() {
     asesorActual = $("cmbAsesor").value;
     if (!asesorActual) {
@@ -636,13 +722,130 @@ function mostrarRuta(reclamoId) {
 
     marcadorInicio = L.circleMarker(pInicio, { radius: 8, color: '#0e9e93', fillColor: '#0e9e93', fillOpacity: 1, weight: 2 })
         .bindTooltip("Origen", { permanent: false }).addTo(mapaLeaflet);
-    marcadorFin = L.circleMarker(pFin, { radius: 8, color: '#2563eb', fillColor: '#2563eb', fillOpacity: 1, weight: 2 })
+    marcadorFin = L.circleMarker(pFin, { radius: 8, color: '#1e40af', fillColor: '#1e40af', fillOpacity: 1, weight: 2 })
         .bindTooltip("Destino", { permanent: false }).addTo(mapaLeaflet);
 
     mapaLeaflet.fitBounds(capaRuta.getBounds(), { padding: [30, 30] });
 }
 
-/* ---------- Generación de PDF (misma lógica; acentos alineados a la nueva paleta) ---------- */
+/* ---------- Resumen general en formato oficial de planilla ---------- */
+function inicializarFechasResumen() {
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    const toISO = d => d.toISOString().slice(0, 10);
+    $("resFechaDesde").value = toISO(primerDia);
+    $("resFechaHasta").value = toISO(ultimoDia);
+}
+
+function generarResumenPDF() {
+    if (!registros.length) return alert("No hay datos cargados. Procese un archivo primero.");
+
+    const doc = new window.jspdf.jsPDF('l', 'mm', 'a4');
+    const anchoPag = doc.internal.pageSize.getWidth();
+
+    const noReporte = $("resNoReporte").value || '01';
+    const fDesde = $("resFechaDesde").value;
+    const fHasta = $("resFechaHasta").value;
+    const fmt = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}-${m}-${y}`; };
+
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(16, 24, 37);
+    doc.text("REPORTE DE SINIESTRO PARA CALCULO DE TIEMPO EXTRAORDINARIO", 14, 14);
+    doc.setFontSize(11);
+    doc.text(`No. ${noReporte}`, anchoPag - 14, 14, { align: 'right' });
+
+    doc.setFontSize(10);
+    doc.text(`Del:  ${fmt(fDesde)}   AL   ${fmt(fHasta)}`, 14, 21);
+
+    /* roster fijo + cualquier asesor nuevo detectado en los datos cargados */
+    const nombresCargados = [...new Set(registros.map(x => x.asesor))];
+    const claveReal = {};
+    nombresCargados.forEach(n => claveReal[normalizarNombre(n)] = n);
+
+    let filas = ROSTER_ASESORES.map(r => ({ cod: r.cod, nombre: r.nombre, clave: claveReal[normalizarNombre(r.nombre)] || null }));
+    const enRoster = new Set(ROSTER_ASESORES.map(r => normalizarNombre(r.nombre)));
+    nombresCargados.forEach(n => { if (!enRoster.has(normalizarNombre(n))) filas.push({ cod: '', nombre: n, clave: n }); });
+
+    let sumInsp = 0, sumAjuste = 0, sumEmerg = 0, sumTotal = 0;
+
+    const body = filas.map(f => {
+        const datos = f.clave ? registros.filter(x => x.asesor === f.clave) : [];
+        const ext = f.clave ? (adicionalesAsesores[f.clave] || { ajustes: 0, inspecciones: 0 }) : { ajustes: 0, inspecciones: 0 };
+        const insNo = ext.inspecciones || 0, ajNo = ext.ajustes || 0;
+        const emergNo = datos.filter(x => x.autorizado).length;
+        const insTotal = insNo * 30, ajTotal = ajNo * 100, emergTotal = emergNo * 300;
+        const totalPagar = insTotal + ajTotal + emergTotal;
+        sumInsp += insTotal; sumAjuste += ajTotal; sumEmerg += emergTotal; sumTotal += totalPagar;
+        return [f.cod, f.nombre, insNo, 30, insTotal, ajNo, 100, ajTotal, emergNo, 300, emergTotal, totalPagar];
+    });
+
+    body.push(['', 'Total Interamericana', '', '', sumInsp, '', '', sumAjuste, '', '', sumEmerg, sumTotal]);
+
+    doc.autoTable({
+        startY: 26,
+        head: [
+            ['Cod. Corp.', 'NOMBRE',
+                { content: 'INSPECCIONES', colSpan: 3, styles: { halign: 'center' } },
+                { content: 'AJUSTE EN TALLERES INTERIOR CAPITAL', colSpan: 3, styles: { halign: 'center' } },
+                { content: 'EMERGENCIAS ATENDIDAS DESPUES DEL KM. 30', colSpan: 3, styles: { halign: 'center' } },
+                'TOTAL A'],
+            ['', 'La Interamericana De Ajustes, S.A:', 'No.', 'Monto\ninspeccion', 'Total', 'No.', 'Monto\nnegociacion', 'Total', 'No.', 'Monto\nemergencia', 'Total', 'PAGAR']
+        ],
+        body,
+        theme: 'grid',
+        styles: { font: 'Helvetica', fontSize: 7.5, cellPadding: 1.6, halign: 'center', valign: 'middle', lineColor: [203, 213, 225], lineWidth: 0.15, textColor: [16, 24, 37] },
+        headStyles: { fillColor: [16, 24, 37], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+        columnStyles: {
+            0: { cellWidth: 16 }, 1: { cellWidth: 46, halign: 'left' }, 2: { cellWidth: 12 }, 3: { cellWidth: 17 }, 4: { cellWidth: 14 },
+            5: { cellWidth: 12 }, 6: { cellWidth: 18 }, 7: { cellWidth: 14 }, 8: { cellWidth: 12 }, 9: { cellWidth: 18 }, 10: { cellWidth: 14 }, 11: { cellWidth: 16 }
+        },
+        didParseCell: function (data) {
+            if (data.section === 'body' && data.row.index === body.length - 1) {
+                data.cell.styles.fontStyle = 'bold';
+                data.cell.styles.fillColor = [240, 244, 248];
+            }
+        },
+        margin: { left: 14, right: 14 }
+    });
+
+    let y = doc.lastAutoTable.finalY + 18;
+    const medioX = anchoPag / 2 + 6;
+
+    const elaboradoNombre = $("resElaboradoNombre").value || '';
+    const elaboradoCargo = $("resElaboradoCargo").value || '';
+    const autNombre1 = $("resAutNombre1").value || '';
+    const autCargo1 = $("resAutCargo1").value || '';
+    const autNombre2 = $("resAutNombre2").value || '';
+    const autCargo2 = $("resAutCargo2").value || '';
+
+    doc.setTextColor(16, 24, 37);
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(9);
+    doc.text("Elaborado por:", 20, y);
+    doc.text("Autorizado por:", medioX, y);
+
+    doc.setDrawColor(148, 163, 184);
+    doc.line(20, y + 9, 118, y + 9);
+    doc.line(medioX, y + 9, medioX + 98, y + 9);
+
+    doc.setFont("Helvetica", "normal"); doc.setFontSize(8.5);
+    doc.text(elaboradoNombre, (20 + 118) / 2, y + 14, { align: 'center' });
+    doc.text(elaboradoCargo, (20 + 118) / 2, y + 19, { align: 'center' });
+    doc.text(autNombre1, medioX + 49, y + 14, { align: 'center' });
+    doc.text(autCargo1, medioX + 49, y + 19, { align: 'center' });
+
+    y += 34;
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(9);
+    doc.text("Autorizado por:", 20, y);
+    doc.setDrawColor(148, 163, 184);
+    doc.line(20, y + 9, 118, y + 9);
+    doc.setFont("Helvetica", "normal"); doc.setFontSize(8.5);
+    doc.text(autNombre2, (20 + 118) / 2, y + 14, { align: 'center' });
+    doc.text(autCargo2, (20 + 118) / 2, y + 19, { align: 'center' });
+
+    doc.save(`Resumen_Tiempo_Extraordinario_${fDesde || 'periodo'}.pdf`);
+}
+
+/* ---------- Generación de PDF Individual ---------- */
 function generarPDF() {
     if (!asesorActual) return alert("Seleccione un asesor.");
     const doc = new window.jspdf.jsPDF('p', 'mm', 'a4');
@@ -725,7 +928,7 @@ function escribirBloquePDF(doc, ase, datos, ext) {
 
     doc.setDrawColor(16, 24, 37); doc.line(14, finalY + 21, 196, finalY + 21);
 
-    doc.setFontSize(10); doc.setFont("Helvetica", "bold"); doc.setTextColor(37, 99, 235);
+    doc.setFontSize(10); doc.setFont("Helvetica", "bold"); doc.setTextColor(30, 64, 175); // Azul corporativo elegante
     doc.text("TOTAL NETO A PAGAR:", 14, finalY + 25);
     let granTotal = (autorizados.length * 300) + (ext.ajustes * 100) + (ext.inspecciones * 30);
     doc.text(`Q ${granTotal.toLocaleString()}.00`, 165, finalY + 25);
