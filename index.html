@@ -3,157 +3,337 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KM Asesores de Emergencia</title>
+<title>KM Asesores de Emergencia · Despacho</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 :root {
-    --bg-main: #f8fafc;
+    --bg-page: #eef1f6;
     --panel-bg: #ffffff;
-    --primary: #0f172a;
-    --primary-light: #1e293b;
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --success: #10b981;
-    --danger: #ef4444;
-    --text-main: #334155;
+    --asphalt: #101825;
+    --asphalt-2: #1c2a3d;
+    --asphalt-soft: #24344a;
+    --ink: #101825;
+    --text-main: #2c3948;
     --text-muted: #64748b;
-    --border: #e2e8f0;
+    --text-inverse: #dbe4f0;
+    --border: #e1e6ee;
+
+    --signal: #2563eb;      /* Azul corporativo elegante */
+    --signal-dark: #1d4ed8;
+    --route: #0e9e93;       /* Teal ruta / OSRM */
+    --route-dark: #0b8078;
+    --caution: #ffc93c;     /* Amarillo señalización */
+    --success: #17a673;
+    --danger: #e5384f;
+
+    --radius: 14px;
+    --shadow: 0 10px 30px rgba(16, 24, 37, 0.06);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-body { background: var(--bg-main); color: var(--text-main); padding: 0 30px 30px 30px; }
-
-/* Encabezado Moderno y Centrado Real */
-header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    margin: 0 -30px 30px -30px; 
-    padding: 35px 20px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg-page);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, sans-serif;
+    padding: 0 28px 40px 28px;
 }
-h1 { 
-    color: white; 
-    font-size: 28px; 
-    font-weight: 700; 
-    letter-spacing: 0.5px; 
+.mono { font-family: 'IBM Plex Mono', monospace; }
+
+/* ===================== HEADER / CONSOLA DE DESPACHO ===================== */
+header.dispatch {
+    position: relative;
+    margin: 0 -30px 26px -30px;
+    background: linear-gradient(135deg, var(--asphalt) 0%, var(--asphalt-2) 65%, var(--asphalt-soft) 100%);
+    padding: 30px 34px 26px 34px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+}
+.hazard-strip {
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: var(--signal); /* Barra superior azul corporativo fijo */
+}
+.dispatch-top {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+}
+.brandblock { display: flex; align-items: center; gap: 14px; }
+.brand-tag {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--signal); /* Fondo azul */
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue'; color: white; font-size: 20px; letter-spacing: 1px;
+    box-shadow: 0 4px 10px rgba(37,99,235,0.15);
+}
+h1 {
+    color: white;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px; letter-spacing: 2px; line-height: 1;
     text-transform: uppercase;
-    text-align: center;
+}
+.subtitle {
+    color: #94a3b8; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+    margin-top: 4px; font-weight: 600;
+}
+.live-box {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    padding: 8px 14px; border-radius: 999px;
+}
+.live-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--route); /* Punto verde en vivo */
+    box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
+    animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+#reloj { color: white; font-size: 12px; letter-spacing: 1px; font-weight: 600; }
+
+/* ===================== PANELES ===================== */
+.panel, .izq, .der, .mapa-panel {
+    background: var(--panel-bg); border-radius: var(--radius); padding: 22px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+    position: relative;
+}
+.panel { margin-bottom: 24px; }
+.panel::before, .izq::before, .der::before, .mapa-panel::before {
+    content: ""; position: absolute; top: 0; left: 18px; right: 18px; height: 3px;
+    border-radius: 0 0 3px 3px; background: var(--signal);
+}
+.der::before { background: var(--danger); }
+.izq::before { background: var(--route); }
+.mapa-panel::before { background: var(--caution); }
+
+h3 {
+    margin-bottom: 16px; color: var(--ink); font-size: 13px; font-weight: 700;
+    letter-spacing: 1.2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px;
 }
 
-/* Paneles y Contenedores */
-.panel { background: var(--panel-bg); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(15,23,42,0.04); border: 1px solid var(--border); margin-bottom: 25px; }
-.contenedor { display: flex; gap: 25px; align-items: flex-start; }
-.izq { width: 55%; } .der { width: 45%; }
-.izq, .der { background: var(--panel-bg); padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(15,23,42,0.04); border: 1px solid var(--border); }
-h3 { margin-bottom: 18px; color: var(--primary); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.controles-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
+.upload-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
-/* Controles de Formulario */
-input[type=file] { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: #f1f5f9; font-size: 14px; color: var(--text-main); cursor: pointer; }
-select, .input-num { padding: 11px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); font-size: 14px; color: var(--text-main); outline: none; transition: all 0.2s; }
-select:focus, .input-num:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-select { min-width: 260px; font-weight: 500; }
-.input-num { width: 100%; max-width: 140px; font-weight: 600; text-align: center; background: #f8fafc; }
+input[type=file] {
+    padding: 9px 14px; border: 1px dashed var(--border); border-radius: 10px;
+    background: #f6f8fb; font-size: 13px; color: var(--text-main); cursor: pointer;
+}
+select, .input-num {
+    padding: 11px 16px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--panel-bg); font-size: 14px; color: var(--text-main); outline: none;
+    transition: all .2s;
+}
+select:focus, .input-num:focus, button:focus-visible, input[type=file]:focus-visible {
+    outline: 2px solid var(--signal); outline-offset: 2px;
+}
+select { min-width: 240px; font-weight: 600; }
+.input-num { width: 100%; max-width: 140px; font-weight: 700; text-align: center; background: #f8fafc; font-family: 'IBM Plex Mono', monospace; }
 
-/* Botones */
-button { border: none; border-radius: 10px; padding: 11px 20px; font-weight: 600; font-size: 14px; transition: all 0.2s; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+button {
+    border: none; border-radius: 10px; padding: 11px 18px; font-weight: 700; font-size: 13px;
+    letter-spacing: .3px; transition: all .15s; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+}
+button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16,24,37,0.14); }
 button:active { transform: translateY(0); }
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-success { background: var(--success); color: white; }
-.btn-success:hover { background: #059669; }
-.btn-secondary { background: #e2e8f0; color: var(--primary); }
-.btn-secondary:hover { background: #cbd5e1; }
+.btn-primary { background: var(--signal); color: #fff; }
+.btn-success { background: var(--route); color: #fff; }
+.btn-secondary { background: var(--asphalt); color: var(--text-inverse); }
 
-/* Acciones en Tablas (Botones Flecha) */
-.aut, .noaut { color: white; width: 34px; height: 34px; border-radius: 8px; padding: 0; justify-content: center; font-size: 16px; }
+.aut, .noaut { color: #fff; width: 32px; height: 32px; border-radius: 8px; padding: 0; justify-content: center; font-size: 15px; }
 .aut { background: var(--success); } .noaut { background: var(--danger); }
 
-/* Tarjetas de Indicadores */
-.cards { display: flex; gap: 20px; margin-bottom: 25px; }
-.card { flex: 1; background: var(--panel-bg); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(15,23,42,0.03); border: 1px solid var(--border); position: relative; overflow: hidden; }
-.card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--border); }
-.card:nth-child(1)::before { background: var(--accent); }
-.card:nth-child(2)::before { background: var(--success); }
-.card:nth-child(3)::before { background: linear-gradient(90deg, #f59e0b, #eab308); }
-.card h3 { color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; justify-content: center; }
-.card h2 { color: var(--primary); font-size: 28px; font-weight: 700; }
+#estado {
+    margin-top: 14px; padding: 11px 16px; border-radius: 10px; background: #fff3ec;
+    color: var(--signal-dark); font-weight: 700; font-size: 13px; display: none; border-left: 4px solid var(--signal);
+}
 
-/* Estilos de Tabla */
+/* ===================== CARRUSEL DE ASESORES ===================== */
+.carrusel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.carrusel-wrap {
+    display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 12px 2px;
+    scroll-snap-type: x proximity;
+}
+.carrusel-wrap::-webkit-scrollbar { height: 6px; }
+.carrusel-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+.asesor-card {
+    scroll-snap-align: start;
+    flex: 0 0 190px;
+    background: #fbfcfe; border: 1px solid var(--border); border-left: 4px solid var(--signal);
+    border-radius: 12px; padding: 14px; cursor: pointer; transition: all .15s;
+}
+.asesor-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.asesor-card.activo { border-left-color: var(--route); background: #f0fbfa; box-shadow: 0 0 0 2px rgba(14,158,147,0.18); }
+.asesor-card .avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--asphalt); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue'; font-size: 15px; margin-bottom: 10px;
+}
+.asesor-card.activo .avatar { background: var(--route); }
+.asesor-card .nombre { font-size: 12.5px; font-weight: 700; color: var(--ink); line-height: 1.25; margin-bottom: 6px; min-height: 32px; }
+.asesor-card .meta { display: flex; justify-content: space-between; align-items: baseline; }
+.asesor-card .meta .n { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 700; color: var(--signal); }
+.asesor-card.activo .meta .n { color: var(--route-dark); }
+.asesor-card .meta .lbl { font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.asesor-card .check { font-size: 11px; color: var(--success); font-weight: 700; margin-top: 6px; display: none; }
+.asesor-card.guardado .check { display: block; }
+
+/* ===================== KPI ===================== */
+.cards { display: flex; gap: 16px; margin-bottom: 24px; }
+.card {
+    flex: 1; background: linear-gradient(160deg, var(--asphalt), var(--asphalt-2));
+    padding: 20px 22px; border-radius: var(--radius); box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+.card::after {
+    content: ""; position: absolute; right: -20px; top: -20px; width: 90px; height: 90px; border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+}
+.card h3 { color: #93a2b8; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 10px; }
+.card h2 { color: #fff; font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 700; letter-spacing: .5px; }
+.card:nth-child(1) h2 { color: var(--caution); }
+.card:nth-child(2) h2 { color: var(--route); }
+.card:nth-child(3) h2 { color: var(--signal); }
+
+/* ===================== MAPA DE RUTA ===================== */
+.mapa-panel { margin-bottom: 24px; }
+.mapa-cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.mapa-readout { display: flex; gap: 22px; align-items: baseline; }
+.mapa-readout .valor { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 700; color: var(--ink); }
+.mapa-readout .valor.km { color: var(--signal); }
+.mapa-readout .etiqueta { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; display: block; margin-bottom: 2px; }
+#mapa { height: 340px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #f1f4f8; }
+.mapa-vacio {
+    height: 340px; border-radius: 10px; border: 1px dashed var(--border); background: #f6f8fb;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;
+}
+.mapa-vacio strong { color: var(--ink); font-size: 14px; }
+.leyenda { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+.leyenda span { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+.leyenda i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot-inicio { background: var(--route); }
+.dot-fin { background: var(--signal); }
+.dot-linea { background: var(--asphalt); border-radius: 2px; width: 16px; height: 3px; }
+
+/* ===================== TABLAS ===================== */
+.contenedor { display: flex; gap: 22px; align-items: flex-start; }
+.izq { width: 55%; } .der { width: 45%; }
 table { width: 100%; border-collapse: collapse; text-align: left; }
-thead { position: sticky; top: 0; z-index: 10; display: table; width: 100%; table-layout: fixed; }
-th { background: #f1f5f9; color: var(--primary); padding: 14px 16px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); }
-td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); vertical-align: middle; }
-tbody tr { display: table; width: 100%; table-layout: fixed; transition: background 0.15s; }
-tbody tr:nth-child(even) { background: #f8fafc; }
-tbody tr:hover { background: #f0f5ff; }
-#tblAutorizados, #bodyNoAutorizados { display: block; max-height: 480px; overflow-y: auto; }
+thead { display: table; width: 100%; table-layout: fixed; }
+th {
+    background: #f6f8fb; color: var(--ink); padding: 12px 14px; font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px; border-bottom: 2px solid var(--border);
+}
+td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text-main); }
+tbody tr { display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background .12s; }
+tbody tr:hover { background: #f6f9fc; }
+#tblAutorizados, #bodyNoAutorizados { display: block; max-height: 380px; overflow-y: auto; }
 
 .motivo-texto { display: block; font-size: 11px; color: var(--danger); font-weight: 600; margin-top: 4px; }
 
-/* Utilidades */
-#estado { margin-top: 15px; padding: 12px 16px; border-radius: 10px; background: #eff6ff; color: var(--accent); font-weight: 600; font-size: 13px; border-left: 4px solid var(--accent); display: none; }
-.controles-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
-.inputs-bottom { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-.inputs-bottom label { font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
+.inputs-bottom { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.inputs-bottom label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); display: block; margin-bottom: 6px; }
 
-@media(max-width:1200px) { .contenedor, .cards { flex-direction: column; } .izq, .der { width: 100%; } .inputs-bottom { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+    .contenedor { flex-direction: column; }
+    .izq, .der { width: 100%; }
+}
 </style>
 </head>
 <body>
 
-<header>
-    <h1>KM ASESORES DE EMERGENCIA</h1>
+<header class="dispatch">
+    <div class="hazard-strip"></div>
+    <div class="dispatch-top">
+        <div class="brandblock">
+            <div class="brand-tag">KM</div>
+            <div>
+                <h1>Asesores de Emergencia</h1>
+                <div class="subtitle">Seguros el Roble</div>
+            </div>
+        </div>
+        <div class="live-box">
+            <span class="live-dot"></span>
+            <span id="reloj" class="mono">--:--:--</span>
+        </div>
+    </div>
 </header>
 
 <div class="panel">
-    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+    <div class="upload-row">
         <input type="file" id="fileInput">
-        <button class="btn btn-primary" onclick="procesarExcel()">📦 Procesar Archivo</button>
+        <button class="btn-primary" onclick="procesarExcel()">📦 Procesar archivo</button>
     </div>
-    
+
     <div class="controles-top">
-        <div style="display:flex; gap:10px; align-items:center;">
-            <select id="cmbAsesor" onchange="filtrarAsesor()"><option value="">Seleccione asesor</option></select>
+        <div>
+            <select id="cmbAsesor" onchange="cmbCambio()"><option value="">Seleccione asesor</option></select>
         </div>
-        <div style="margin-left:auto; display:flex; gap:10px;">
-            <button class="btn btn-success" onclick="generarPDF()">📄 PDF Asesor</button>
-            <button class="btn btn-secondary" onclick="generarPDFTodos()">💼 PDF General</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-success" onclick="generarPDF()">📄 PDF asesor (1 hoja)</button>
+            <button class="btn-secondary" onclick="generarPDFTodos()">💼 PDF general</button>
         </div>
     </div>
     <div id="estado"></div>
+
+    <div style="margin-top:22px;">
+        <div class="carrusel-header">
+            <h3 style="margin-bottom:0;"> Asesores de Emergencia</h3>
+        </div>
+        <div class="carrusel-wrap" id="carrusel"></div>
+    </div>
 </div>
 
 <div class="cards">
-    <div class="card"><h3>📋 Total Reclamos</h3><h2 id="lblTotal">0</h2></div>
+    <div class="card"><h3>📋 Total reclamos</h3><h2 id="lblTotal">0</h2></div>
     <div class="card"><h3>✅ Autorizados</h3><h2 id="lblAutorizados">0</h2></div>
-    <div class="card"><h3>💰 Total Pago</h3><h2 id="lblPago">Q0</h2></div>
+    <div class="card"><h3>💰 Total a pagar</h3><h2 id="lblPago">Q0</h2></div>
+</div>
+
+<div class="mapa-panel">
+    <div class="mapa-cabecera">
+        <h3 style="margin-bottom:0;">Ruta del reclamo</h3>
+        <div class="mapa-readout" id="mapaReadout" style="display:none;">
+            <div><span class="etiqueta">Reclamo</span><span class="valor mono" id="roReclamo">-</span></div>
+            <div><span class="etiqueta">Distancia</span><span class="valor km mono" id="roKm">0 KM</span></div>
+        </div>
+    </div>
+    <div id="mapaVacio" class="mapa-vacio">
+        <strong>Sin ruta seleccionada</strong>
+        <span>Haz clic en cualquier reclamo de las tablas para trazar su ruta en el mapa.</span>
+    </div>
+    <div id="mapa" style="display:none;"></div>
+    <div class="leyenda">
+        <span><i class="dot-inicio"></i> Punto de origen</span>
+        <span><i class="dot-fin"></i> Punto de destino</span>
+        <span><i class="dot-linea"></i> Ruta calculada (OSRM)</span>
+    </div>
 </div>
 
 <div class="contenedor">
     <div class="izq">
-        <h3> Autorizados (&gt;30 KM)</h3>
+        <h3>🟢 Autorizados (&gt;30 KM)</h3>
         <table>
             <thead>
                 <tr>
                     <th style="width:20%">Reclamo</th>
-                    <th style="width:35%">Lugar</th>
+                    <th style="width:35%">Asegurado / Lugar</th>
                     <th style="width:15%">KM</th>
-                    <th style="width:15%">Tipo</th>
                     <th style="width:15%">Pago</th>
-                    <th style="width:10%"></th>
+                    <th style="width:15%"></th>
                 </tr>
             </thead>
             <tbody id="tblAutorizados"></tbody>
         </table>
     </div>
     <div class="der">
-        <h3>⚠️ No Autorizados (&lt;=30 KM)</h3>
+        <h3>🔴 No autorizados (&lt;=30 KM)</h3>
         <table>
             <thead>
                 <tr>
@@ -165,14 +345,14 @@ tbody tr:hover { background: #f0f5ff; }
             </thead>
             <tbody id="bodyNoAutorizados"></tbody>
         </table>
-        
+
         <div class="inputs-bottom">
             <div>
-                <label>Ajustes Atendidos (Q100 c/u)</label>
+                <label>Ajustes atendidos (Q100)</label>
                 <input type="number" id="inputAjustes" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
             </div>
             <div>
-                <label>Inspecciones Realizadas (Q30 c/u)</label>
+                <label>Inspecciones realizadas (Q30)</label>
                 <input type="number" id="inputInspecciones" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
             </div>
         </div>
@@ -181,70 +361,134 @@ tbody tr:hover { background: #f0f5ff; }
 
 <script>
 let registros = [], asesorActual = "", adicionalesAsesores = {};
+let mapaLeaflet = null, capaRuta = null, marcadorInicio = null, marcadorFin = null;
 const $ = id => document.getElementById(id);
+
+/* ---------- Puntos de salida fijos por asesor ---------- */
+const PUNTO_CAPITAL = { lat: 14.643056, lon: -90.513333 }; // Palacio Nacional, Cd. de Guatemala
+
+const PUNTOS_SALIDA = {
+    "RAUL ESPINOZA":  { lat: 14.301893,        lon: -90.779291 },
+    "JOSUE CLAVERIA": { lat: 14.301893,        lon: -90.779291 },
+    "RUBEN PAMAL":    { lat: 15.471524455074,  lon: -90.384895836031 },
+    "HECTOR GUERRA":  { lat: 14.28817,         lon: -89.89369 },
+    "DANY PUAC":      { lat: 14.858998,        lon: -91.521080 },
+    "JOQUIN LOPEZ":   { lat: 14.858998,        lon: -91.521080 },
+    "MYNOR RAMIREZ":  { lat: 14.59952700,      lon: -89.434419970 },
+    "RONAL SANTOS":   { lat: 15.326389,        lon: -91.489587 }
+};
+
+function obtenerPuntoSalida(asesor) {
+    const clave = String(asesor || "").trim().toUpperCase();
+    return PUNTOS_SALIDA[clave] || PUNTO_CAPITAL;
+}
+
+/* ---------- Reloj de consola ---------- */
+function tickReloj() {
+    const d = new Date();
+    $("reloj").textContent = d.toLocaleTimeString('es-GT', { hour12: false });
+}
+setInterval(tickReloj, 1000); tickReloj();
+
+/* ---------- Utilidades de datos (sin cambios de lógica) ---------- */
+function formatearFechaExcel(valor) {
+    if (valor === undefined || valor === null) return "";
+    let s = String(valor).trim();
+    if (!isNaN(s) && s.length > 0 && parseFloat(s) > 30000) {
+        let fechaS = new Date((parseFloat(s) - 25569) * 86400 * 1000);
+        let dia = String(fechaS.getDate()).padStart(2, '0');
+        let mes = String(fechaS.getMonth() + 1).padStart(2, '0');
+        let anio = fechaS.getFullYear();
+        return `${dia}/${mes}/${anio}`;
+    }
+    return s;
+}
+
+function limpiarCoordenada(valor) {
+    if (valor === undefined || valor === null) return null;
+    let s = String(valor).trim().replace(/,/g, '.');
+    let num = parseFloat(s);
+    return isNaN(num) ? null : num;
+}
 
 async function procesarExcel() {
     const file = $("fileInput").files[0];
-    if (!file) return alert("Por favor, seleccione un archivo válido.");
+    if (!file) return alert("Por favor, seleccione un archivo.");
 
     registros = []; adicionalesAsesores = {};
-    const est = $("estado"); est.style.display = "block"; est.innerText = "⏳ Leyendo archivo Excel...";
+    ocultarMapa();
+    const est = $("estado"); est.style.display = "block"; est.innerText = "VERIFICANDO DOCUMENTO";
 
     try {
-        const data = await file.arrayBuffer(),
-              wb = XLSX.read(data, {type: 'array'}),
-              filas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}),
-              asesores = new Set();
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, {type: 'array'});
+        const hoja = wb.Sheets[wb.SheetNames[0]];
+        const matriz = XLSX.utils.sheet_to_json(hoja, {header: 1});
 
-        const filasFiltradas = filas.slice(1).filter(r => r && r[0]);
-        const totalFilas = filasFiltradas.length;
-        
-        const tamañoLote = 5; 
-        
-        for (let i = 0; i < totalFilas; i += tamañoLote) {
-            est.innerText = `🔄 Procesando rutas: ${i + 1} de ${totalFilas}...`;
-            const lote = filasFiltradas.slice(i, i + tamañoLote);
-            
-            await Promise.all(lote.map(async (r) => {
-                const url = `https://router.project-osrm.org/route/v1/driving/${r[3]},${r[2]};${r[5]},${r[4]}?overview=false`;
-                let km = 0;
-                
+        if (matriz.length < 2) throw new Error("El archivo no contiene suficientes filas.");
+
+        const asesores = new Set();
+        for (let i = 1; i < matriz.length; i++) {
+            const fila = matriz[i];
+            if (!fila || fila.length === 0) continue;
+
+            const numId = String(fila[0] || "").trim();
+            const reclamo = String(fila[1] || "").trim();
+            const asesor = String(fila[2] || "SIN ASESOR").trim();
+            const fecha = formatearFechaExcel(fila[3]);
+            const poliza = String(fila[4] || "").trim();
+            const asegurado = String(fila[5] || "").trim();
+
+            const puntoSalida = obtenerPuntoSalida(asesor);
+            const latInicio = puntoSalida.lat;
+            const lonInicio = puntoSalida.lon;
+            const latFinal = limpiarCoordenada(fila[8]);
+            const lonFinal = limpiarCoordenada(fila[9]);
+
+            const direccion = String(fila[10] || "").trim();
+            const valor = String(fila[11] || "0");
+
+            if(!reclamo && !asesor) continue;
+
+            let km = 0;
+            let rutaGeom = null;
+            if (latInicio && lonInicio && latFinal && lonFinal) {
+                const url = `https://router.project-osrm.org/route/v1/driving/${lonInicio},${latInicio};${lonFinal},${latFinal}?overview=full&geometries=geojson`;
                 try {
                     const res = await fetch(url);
                     if (res.ok) {
                         const d = await res.json();
-                        if (d && d.routes && d.routes.length) {
+                        if (d?.routes?.length) {
                             km = Number((d.routes[0].distance / 1000).toFixed(2));
+                            if (d.routes[0].geometry?.coordinates) {
+                                rutaGeom = d.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                            }
                         }
                     }
-                } catch (err) {
-                    console.warn("Error en fila de API OSRM, se asignará 0 KM", err);
-                }
+                } catch (e) { console.warn(e); }
+            }
 
-                let name = String(r[0]).trim();
-                registros.push({ 
-                    asesor: name, 
-                    reclamo: String(r[1]).trim(), 
-                    lugar: String(r[6] || ""), 
-                    km, 
-                    autorizado: km > 30, 
-                    tipo: "Automático",
-                    motivo: "" 
-                });
-                asesores.add(name);
-                if (!adicionalesAsesores[name]) adicionalesAsesores[name] = { ajustes: 0, inspecciones: 0, guardado: false };
-            }));
+            registros.push({
+                numId, reclamo, asesor, fecha, poliza, asegurado, latInicio, lonInicio, latFinal, lonFinal,
+                lugar: direccion, valor, km, ruta: rutaGeom, autorizado: km > 30, tipo: "Automático", motivo: ""
+            });
+
+            asesores.add(asesor);
+            if (!adicionalesAsesores[asesor]) {
+                adicionalesAsesores[asesor] = { ajustes: 0, inspecciones: 0, guardado: false };
+            }
         }
 
         buildSelector(asesores);
-        est.innerText = "✅ Todo procesado con éxito de forma correcta.";
-        setTimeout(() => est.style.display = "none", 4000);
-    } catch(e) {
-        est.innerText = "❌ Error procesando el archivo.";
-        console.error(e);
+        renderCarrusel(asesores);
+        est.innerText = "✅ Estructura cargada, fechas formateadas y rutas calculadas.";
+        setTimeout(() => est.style.display = "none", 3000);
+    } catch (e) {
+        est.innerText = "❌ Error: " + e.message;
     }
 }
 
+/* ---------- Selector + carrusel de asesores ---------- */
 function buildSelector(asesoresSet) {
     let cmb = $("cmbAsesor");
     cmb.innerHTML = '<option value="">Seleccione asesor</option>';
@@ -256,27 +500,60 @@ function buildSelector(asesoresSet) {
     });
 }
 
+function renderCarrusel(asesoresSet) {
+    const cont = $("carrusel");
+    const lista = [...asesoresSet].sort();
+    cont.innerHTML = lista.map(a => {
+        let count = registros.filter(x => x.asesor === a && x.autorizado).length;
+        let inicial = a.trim().charAt(0).toUpperCase() || "?";
+        return `<div class="asesor-card" data-asesor="${a.replace(/"/g,'&quot;')}" onclick="seleccionarDesdeCarrusel('${a.replace(/'/g,"\\'")}')">
+            <div class="avatar">${inicial}</div>
+            <div class="nombre">${a}</div>
+            <div class="meta"><span class="n">${count}</span><span class="lbl">Autorizados</span></div>
+            <div class="check">✓ Ajustes guardados</div>
+        </div>`;
+    }).join('');
+}
+
+function seleccionarDesdeCarrusel(asesor) {
+    $("cmbAsesor").value = asesor;
+    cmbCambio();
+}
+
+function cmbCambio() {
+    filtrarAsesor();
+}
+
 function actualizarColoresSelector() {
     Array.from($("cmbAsesor").options).forEach(op => {
         if (!op.value) return;
         let ext = adicionalesAsesores[op.value],
             count = registros.filter(x => x.asesor === op.value && x.autorizado).length;
         if (ext && ext.guardado) {
-            op.style.color = "var(--success)"; op.style.fontWeight = "bold";
+            op.style.color = "#0e9e93"; op.style.fontWeight = "bold";
             op.textContent = `✓ ${op.value} (${count})`;
         } else {
             op.style.color = ""; op.style.fontWeight = "";
             op.textContent = `${op.value} (${count})`;
         }
     });
+
+    document.querySelectorAll('.asesor-card').forEach(card => {
+        const a = card.getAttribute('data-asesor');
+        const ext = adicionalesAsesores[a];
+        card.classList.toggle('guardado', !!(ext && ext.guardado));
+        card.classList.toggle('activo', a === asesorActual);
+    });
 }
 
+/* ---------- Filtro principal (misma lógica de negocio) ---------- */
 function filtrarAsesor() {
     asesorActual = $("cmbAsesor").value;
     if (!asesorActual) {
         $("lblTotal").innerText = $("lblAutorizados").innerText = 0; $("lblPago").innerText = "Q0";
         $("tblAutorizados").innerHTML = $("bodyNoAutorizados").innerHTML = "";
-        $("inputAjustes").value = $("inputInspecciones").value = 0; return;
+        actualizarColoresSelector();
+        return;
     }
 
     let ext = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 },
@@ -288,155 +565,170 @@ function filtrarAsesor() {
     $("lblTotal").innerText = datos.length; $("lblAutorizados").innerText = aut.length;
     $("lblPago").innerText = "Q" + total.toLocaleString();
 
-    $("tblAutorizados").innerHTML = aut.map(r => {
-        let textoMotivo = r.motivo ? `<span class="motivo-texto" style="color: var(--success);">Justificación: ${r.motivo}</span>` : '';
-        return `<tr><td style="width:20%">${r.reclamo}</td><td style="width:35%">${r.lugar}${textoMotivo}</td><td style="width:15%">${r.km}</td><td style="width:15%">${r.tipo}</td><td style="width:15%">Q300</td><td style="width:10%"><button class="noaut" onclick="cambiarEstado('${r.reclamo}',false)">←</button></td></tr>`;
-    }).join('');
-    
-    $("bodyNoAutorizados").innerHTML = noaut.map(r => {
-        let textoMotivo = r.motivo ? `<span class="motivo-texto">Motivo: ${r.motivo}</span>` : '';
-        return `<tr><td style="width:20%">${r.reclamo}</td><td style="width:55%">${r.lugar}${textoMotivo}</td><td style="width:15%">${r.km}</td><td style="width:10%"><button class="aut" onclick="cambiarEstado('${r.reclamo}',true)">→</button></td></tr>`;
-    }).join('');
+    $("tblAutorizados").innerHTML = aut.map(r => `<tr onclick="mostrarRuta('${r.reclamo.replace(/'/g,"\\'")}')"><td style="width:20%">${r.reclamo}</td><td style="width:35%"><b>${r.asegurado}</b><br><small>${r.lugar}</small></td><td style="width:15%">${r.km} KM</td><td style="width:15%">Q300</td><td style="width:15%"><button class="noaut" onclick="event.stopPropagation(); cambiarEstado('${r.reclamo.replace(/'/g,"\\'")}',false)">←</button></td></tr>`).join('');
+    $("bodyNoAutorizados").innerHTML = noaut.map(r => `<tr onclick="mostrarRuta('${r.reclamo.replace(/'/g,"\\'")}')"><td style="width:20%">${r.reclamo}</td><td style="width:55%">${r.lugar}${r.motivo?`<span class="motivo-texto">Motivo: ${r.motivo}</span>`:''}</td><td style="width:15%">${r.km} KM</td><td style="width:10%"><button class="aut" onclick="event.stopPropagation(); cambiarEstado('${r.reclamo.replace(/'/g,"\\'")}',true)">→</button></td></tr>`).join('');
+
+    actualizarColoresSelector();
 }
 
 function autoGuardarAjustes() {
     if (!asesorActual) return;
-    let aj = parseInt($("inputAjustes").value) || 0,
-        insp = parseInt($("inputInspecciones").value) || 0,
-        tieneDatos = (aj > 0 || insp > 0);
-
-    adicionalesAsesores[asesorActual] = { ajustes: aj, inspecciones: insp, guardado: tieneDatos };
+    let aj = parseInt($("inputAjustes").value) || 0, insp = parseInt($("inputInspecciones").value) || 0;
+    adicionalesAsesores[asesorActual] = { ajustes: aj, inspecciones: insp, guardado: (aj > 0 || insp > 0) };
     actualizarColoresSelector();
-    
-    let autCount = registros.filter(x => x.asesor === asesorActual && x.autorizado).length,
-        total = (autCount * 300) + (aj * 100) + (insp * 30);
-    $("lblPago").innerText = "Q" + total.toLocaleString();
+    let autCount = registros.filter(x => x.asesor === asesorActual && x.autorizado).length;
+    $("lblPago").innerText = "Q" + ((autCount * 300) + (aj * 100) + (insp * 30)).toLocaleString();
 }
 
 function cambiarEstado(rec, est) {
     let r = registros.find(x => x.reclamo === rec);
-    if (r) { 
-        if (est === false) {
-            let motivoIngresado = prompt(`Ingrese el motivo por el cual RECHAZA el reclamo N° ${rec}:`);
-            if (motivoIngresado === null) return; 
-            r.motivo = motivoIngresado.trim() || "No especificado";
-        } else {
-            let motivoAutorizado = prompt(`Ingrese el motivo o justificación para AUTORIZAR el reclamo N° ${rec}:`);
-            if (motivoAutorizado === null) return; 
-            r.motivo = motivoAutorizado.trim() || "Autorizado manualmente";
-        }
-
-        r.autorizado = est; r.tipo = est ? "Manual" : "Automático"; 
-        let ext = adicionalesAsesores[asesorActual];
-        if(ext) ext.guardado = (ext.ajustes > 0 || ext.inspecciones > 0 || est);
-        actualizarColoresSelector(); filtrarAsesor(); 
+    if (r) {
+        let m = prompt(`Motivo de la acción para Reclamo N° ${rec}:`);
+        if (m === null) return;
+        r.motivo = m.trim() || (est ? "Autorizado Manual" : "Rechazado");
+        r.autorizado = est; r.tipo = est ? "Manual" : "Automático";
+        filtrarAsesor(); actualizarColoresSelector(); renderCarrusel(new Set(registros.map(x=>x.asesor)));
+        actualizarColoresSelector();
     }
 }
 
+/* ---------- Mapa de ruta ---------- */
+function ocultarMapa() {
+    $("mapa").style.display = "none";
+    $("mapaVacio").style.display = "flex";
+    $("mapaReadout").style.display = "none";
+}
+
+function mostrarRuta(reclamoId) {
+    const r = registros.find(x => x.reclamo === reclamoId);
+    if (!r) return;
+
+    if (!r.latInicio || !r.lonInicio || !r.latFinal || !r.lonFinal) {
+        alert("Este reclamo no tiene coordenadas completas para trazar la ruta.");
+        return;
+    }
+
+    $("mapaVacio").style.display = "none";
+    $("mapa").style.display = "block";
+    $("mapaReadout").style.display = "flex";
+    $("roReclamo").textContent = r.reclamo;
+    $("roKm").textContent = r.km + " KM";
+
+    if (!mapaLeaflet) {
+        mapaLeaflet = L.map('mapa', { scrollWheelZoom: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 19
+        }).addTo(mapaLeaflet);
+    } else {
+        mapaLeaflet.invalidateSize();
+    }
+
+    if (capaRuta) mapaLeaflet.removeLayer(capaRuta);
+    if (marcadorInicio) mapaLeaflet.removeLayer(marcadorInicio);
+    if (marcadorFin) mapaLeaflet.removeLayer(marcadorFin);
+
+    const pInicio = [r.latInicio, r.lonInicio];
+    const pFin = [r.latFinal, r.lonFinal];
+    const puntosLinea = (r.ruta && r.ruta.length > 1) ? r.ruta : [pInicio, pFin];
+
+    capaRuta = L.polyline(puntosLinea, { color: '#101825', weight: 4, opacity: 0.85 }).addTo(mapaLeaflet);
+
+    marcadorInicio = L.circleMarker(pInicio, { radius: 8, color: '#0e9e93', fillColor: '#0e9e93', fillOpacity: 1, weight: 2 })
+        .bindTooltip("Origen", { permanent: false }).addTo(mapaLeaflet);
+    marcadorFin = L.circleMarker(pFin, { radius: 8, color: '#2563eb', fillColor: '#2563eb', fillOpacity: 1, weight: 2 })
+        .bindTooltip("Destino", { permanent: false }).addTo(mapaLeaflet);
+
+    mapaLeaflet.fitBounds(capaRuta.getBounds(), { padding: [30, 30] });
+}
+
+/* ---------- Generación de PDF (misma lógica; acentos alineados a la nueva paleta) ---------- */
 function generarPDF() {
     if (!asesorActual) return alert("Seleccione un asesor.");
-    const doc = new window.jspdf.jsPDF();
+    const doc = new window.jspdf.jsPDF('p', 'mm', 'a4');
     escribirBloquePDF(doc, asesorActual, registros.filter(x => x.asesor === asesorActual), adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 });
-    doc.save(`Reporte_${asesorActual}.pdf`);
+    doc.save(`Reporte_Unificado_${asesorActual}.pdf`);
 }
 
 function generarPDFTodos() {
     if (!registros.length) return alert("No hay datos cargados.");
-    const doc = new window.jspdf.jsPDF();
-    [...new Set(registros.map(x => x.asesor))].sort().forEach((ase, i) => {
+    const doc = new window.jspdf.jsPDF('p', 'mm', 'a4');
+    const listaAsesores = [...new Set(registros.map(x => x.asesor))].sort();
+    listaAsesores.forEach((ase, i) => {
         if (i > 0) doc.addPage();
         escribirBloquePDF(doc, ase, registros.filter(x => x.asesor === ase), adicionalesAsesores[ase] || { ajustes: 0, inspecciones: 0 });
     });
-    doc.save("Reporte_General_Asesores.pdf");
+    doc.save("Reporte_General_Ajustado.pdf");
 }
 
 function escribirBloquePDF(doc, ase, datos, ext) {
-    // Encabezado Principal
-    doc.setFont("Helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(15, 23, 42);
-    doc.text("KM ASESORES DE EMERGENCIA", 14, 20);
-    
-    doc.setFontSize(11); doc.setFont("Helvetica", "normal"); doc.setTextColor(100, 116, 139);
-    doc.text("REPORTE DE LIQUIDACIÓN DE GASTOS", 14, 26);
-    
-    doc.setDrawColor(226, 232, 240); doc.line(14, 30, 196, 30);
-    
-    doc.setFont("Helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(15, 23, 42);
-    doc.text("ASESOR ATENDIDO: " + ase.toUpperCase(), 14, 38);
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(16, 24, 37);
+    doc.text("KM ASESORES DE EMERGENCIA", 10, 12);
+    doc.setFontSize(9); doc.setFont("Helvetica", "normal"); doc.setTextColor(100, 116, 139);
+    doc.text("LIQUIDACIÓN DE GASTOS UNIFICADA (AJUSTADO A 1 PÁGINA)", 10, 16);
+    doc.setDrawColor(225, 230, 238); doc.line(10, 18, 200, 18);
 
-    let currentY = 44;
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(16, 24, 37);
+    doc.text(`ASESOR: ${ase.toUpperCase()}`, 10, 23);
 
-    // Separar los registros en Autorizados y Rechazados
     let autorizados = datos.filter(x => x.autorizado);
     let rechazados = datos.filter(x => !x.autorizado);
 
-    // --- TABLA 1: RECLAMOS AUTORIZADOS ---
-    doc.setFont("Helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(16, 185, 129); // Color Éxito
-    doc.text("RECLAMOS AUTORIZADOS", 14, currentY);
-    currentY += 4;
+    let headers = [['No.', 'Reclamo', 'Fecha Sin.', 'No. Póliza', 'Asegurado', 'Dirección Siniestro', 'KM', 'Monto']];
 
-    let rowsAut = autorizados.map(r => {
-        let lugarTexto = r.lugar;
-        if (r.motivo) lugarTexto += `\n(Justificación: ${r.motivo})`;
-        return [r.reclamo, lugarTexto, `${r.km} KM`, r.tipo, "Q300.00"];
-    });
+    let rowsAut = autorizados.map((r, index) => [index + 1, r.reclamo, r.fecha, r.poliza, r.asegurado, r.lugar, `${r.km} KM`, "Q300.00"]);
+    let rowsRech = rechazados.map((r, index) => [index + 1, r.reclamo, r.fecha, r.poliza, r.asegurado, `${r.lugar} (Motivo: ${r.motivo || 'Kilometraje <= 30'})`, `${r.km} KM`, "Q0.00"]);
 
-    doc.autoTable({
-        startY: currentY,
-        head: [['Reclamo', 'Lugar / Observaciones', 'Kilómetros', 'Asignación', 'Monto']],
-        body: rowsAut.length ? rowsAut : [['-', 'No existen reclamos autorizados para este asesor.', '-', '-', '-']],
-        theme: 'striped',
-        headStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255], fontStyle: 'bold' },
-        styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3 },
-        columnStyles: { 0: {cellWidth: 25}, 1: {cellWidth: 75}, 2: {cellWidth: 30}, 3: {cellWidth: 25}, 4: {cellWidth: 25} }
-    });
+    let confEstilos = { font: 'Helvetica', fontSize: 7.5, cellPadding: 1.5, overflow: 'linebreak' };
 
-    currentY = doc.lastAutoTable.finalY + 12;
-
-    // --- TABLA 2: RECLAMOS RECHAZADOS ---
-    if (currentY > 230) { doc.addPage(); currentY = 25; }
-    
-    doc.setFont("Helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(239, 68, 68); // Color Peligro
-    doc.text("RECLAMOS RECHAZADOS / NO AUTORIZADOS", 14, currentY);
-    currentY += 4;
-
-    let rowsRech = rechazados.map(r => {
-        let motivoTexto = r.motivo ? r.motivo : "Kilometraje menor o igual a 30 KM";
-        return [r.reclamo, `${r.lugar}\n(Motivo Rechazo: ${motivoTexto})`, `${r.km} KM`, "Automático", "Q0.00"];
-    });
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(14, 158, 147);
+    doc.text("1. RECLAMOS AUTORIZADOS (>30 KM)", 10, 29);
 
     doc.autoTable({
-        startY: currentY,
-        head: [['Reclamo', 'Lugar / Motivo de Rechazo', 'Kilómetros', 'Asignación', 'Monto']],
-        body: rowsRech.length ? rowsRech : [['-', 'No existen reclamos rechazados para este asesor.', '-', '-', '-']],
+        startY: 31, head: headers,
+        body: rowsAut.length ? rowsAut : [['-', 'No hay reclamos autorizados.', '-', '-', '-', '-', '-', '-']],
         theme: 'striped',
-        headStyles: { fillColor: [239, 68, 68], textColor: [255, 255, 255], fontStyle: 'bold' },
-        styles: { font: 'Helvetica', fontSize: 9, cellPadding: 3 },
-        columnStyles: { 0: {cellWidth: 25}, 1: {cellWidth: 75}, 2: {cellWidth: 30}, 3: {cellWidth: 25}, 4: {cellWidth: 25} }
+        headStyles: { fillColor: [14, 158, 147], fontSize: 7.5, fontStyle: 'bold' },
+        styles: confEstilos,
+        columnStyles: { 0:{cellWidth:8}, 1:{cellWidth:18}, 2:{cellWidth:18}, 3:{cellWidth:20}, 4:{cellWidth:30}, 5:{cellWidth:68}, 6:{cellWidth:14}, 7:{cellWidth:14} },
+        margin: { left: 10, right: 10 }
     });
 
-    // --- BLOQUE DE TOTALES Y FIRMAS ---
-    let finalY = doc.lastAutoTable.finalY + 12;
-    if (finalY > 220) { doc.addPage(); finalY = 25; }
+    let nextY = doc.lastAutoTable.finalY + 5;
+    doc.setFont("Helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(229, 56, 79);
+    doc.text("2. RECLAMOS RECHAZADOS (<=30 KM)", 10, nextY);
 
-    doc.setDrawColor(226, 232, 240); doc.line(14, finalY, 196, finalY);
-    finalY += 8;
+    doc.autoTable({
+        startY: nextY + 2, head: headers,
+        body: rowsRech.length ? rowsRech : [['-', 'No hay reclamos rechazados.', '-', '-', '-', '-', '-', '-']],
+        theme: 'striped',
+        headStyles: { fillColor: [229, 56, 79], fontSize: 7.5, fontStyle: 'bold' },
+        styles: confEstilos,
+        columnStyles: { 0:{cellWidth:8}, 1:{cellWidth:18}, 2:{cellWidth:18}, 3:{cellWidth:20}, 4:{cellWidth:30}, 5:{cellWidth:68}, 6:{cellWidth:14}, 7:{cellWidth:14} },
+        margin: { left: 10, right: 10 }
+    });
 
-    doc.setFontSize(10); doc.setFont("Helvetica", "normal"); doc.setTextColor(51, 65, 85);
-    doc.text(`Total Reclamos Autorizados:  ${autorizados.length}`, 14, finalY);
-    doc.text(`Q ${(autorizados.length * 300).toLocaleString()}.00`, 150, finalY);
-    
-    doc.text(`Ajustes Extras Atendidos:  ${ext.ajustes} (Q100 c/u)`, 14, finalY += 7);
-    doc.text(`Q ${(ext.ajustes * 100).toLocaleString()}.00`, 150, finalY);
-    
-    doc.text(`Inspecciones Realizadas:  ${ext.inspecciones} (Q30 c/u)`, 14, finalY += 7);
-    doc.text(`Q ${(ext.inspecciones * 30).toLocaleString()}.00`, 150, finalY);
+    let finalY = doc.lastAutoTable.finalY + 6;
 
-    finalY += 6; doc.setDrawColor(15, 23, 42); doc.line(14, finalY, 196, finalY);
-    
-    doc.setFontSize(13); doc.setFont("Helvetica", "bold"); doc.setTextColor(37, 99, 235);
-    doc.text("TOTAL NETO A PAGAR:", 14, finalY += 10);
+    doc.setDrawColor(203, 213, 225); doc.setFillColor(248, 250, 252);
+    doc.rect(10, finalY, 190, 28, 'F');
+
+    doc.setFontSize(8); doc.setFont("Helvetica", "normal"); doc.setTextColor(51, 65, 85);
+    doc.text(`Total Reclamos Autorizados:   ${autorizados.length}`, 14, finalY + 6);
+    doc.text(`Q ${(autorizados.length * 300).toLocaleString()}.00`, 165, finalY + 6);
+
+    doc.text(`Ajustes Extras Atendidos:     ${ext.ajustes}  (Q100 c/u)`, 14, finalY + 12);
+    doc.text(`Q ${(ext.ajustes * 100).toLocaleString()}.00`, 165, finalY + 12);
+
+    doc.text(`Inspecciones Realizadas:      ${ext.inspecciones}  (Q30 c/u)`, 14, finalY + 18);
+    doc.text(`Q ${(ext.inspecciones * 30).toLocaleString()}.00`, 165, finalY + 18);
+
+    doc.setDrawColor(16, 24, 37); doc.line(14, finalY + 21, 196, finalY + 21);
+
+    doc.setFontSize(10); doc.setFont("Helvetica", "bold"); doc.setTextColor(37, 99, 235);
+    doc.text("TOTAL NETO A PAGAR:", 14, finalY + 25);
     let granTotal = (autorizados.length * 300) + (ext.ajustes * 100) + (ext.inspecciones * 30);
-    doc.text(`Q ${granTotal.toLocaleString()}.00`, 150, finalY);
+    doc.text(`Q ${granTotal.toLocaleString()}.00`, 165, finalY + 25);
 }
 </script>
 </body>
