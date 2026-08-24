@@ -1,1063 +1,1031 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KM Asesores de Emergencia · Despacho</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
-<style>
-:root {
-  --bg-page: #eef1f6;
-  --panel-bg: #ffffff;
-  --asphalt: #101825;
-  --asphalt-2: #1c2a3d;
-  --asphalt-soft: #24344a;
-  --ink: #101825;
-  --text-main: #2c3948;
-  --text-muted: #64748b;
-  --text-inverse: #dbe4f0;
-  --border: #e1e6ee;
-  --signal: #1e40af;
-  --signal-dark: #1e3a8a;
-  --route: #0e9e93;
-  --route-dark: #0b8078;
-  --caution: #ffc93c;
-  --success: #10b981;
-  --danger: #e5384f;
-  --radius: 14px;
-  --shadow: 0 10px 30px rgba(16, 24, 37, .06);
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg-page); color: var(--text-main); font-family: Inter, system-ui, sans-serif; padding: 0 28px 40px; }
-.mono { font-family: IBM Plex Mono, monospace; }
-
-header.dispatch {
-  position: relative;
-  margin: 0 -28px 26px;
-  background: #ffffff;
-  padding: 24px 34px;
-  border-bottom: 1px solid var(--border);
-}
-.dispatch-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
-.brandblock { display: flex; align-items: center; gap: 14px; }
-.brand-tag {
-  width: 46px; height: 46px; border-radius: 10px; background: var(--signal);
-  display: flex; align-items: center; justify-content: center;
-  font-family: Bebas Neue; color: #fff; font-size: 20px; letter-spacing: 1px;
-  box-shadow: 0 0 0 3px #1e40af40;
-}
-h1 { color: var(--ink); font-family: Bebas Neue, sans-serif; font-size: 34px; letter-spacing: 3px; line-height: 1; text-transform: uppercase; }
-.subtitle { color: var(--text-muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-weight: 600; }
-.live-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; border: 1px solid var(--border); padding: 8px 14px; border-radius: 999px; }
-.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--success); box-shadow: 0 0 #10b98199; animation: pulse 1.8s infinite; }
-
-@keyframes pulse { 0% { box-shadow: 0 0 #10b9818c; } 70% { box-shadow: 0 0 0 8px #10b98100; } to { box-shadow: 0 0 #10b98100; } }
-#reloj { color: var(--ink); font-size: 12px; letter-spacing: 1px; }
-
-.panel, .izq, .der, .mapa-panel { background: var(--panel-bg); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); border: 1px solid var(--border); position: relative; }
-.panel { margin-bottom: 24px; }
-.panel:before, .izq:before, .der:before, .mapa-panel:before { content: ""; position: absolute; top: 0; left: 18px; right: 18px; height: 3px; border-radius: 0 0 3px 3px; background: var(--signal); }
-.der:before { background: var(--danger); }
-.izq:before { background: var(--route); }
-.mapa-panel:before { background: var(--caution); }
-
-h3 { margin-bottom: 16px; color: var(--ink); font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-
-.controles-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
-
-.range-picker-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  background: #f8fafc;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
-.range-picker-row label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-select, .input-num, input[type="date"] {
-  padding: 9px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--panel-bg);
-  font-size: 13px;
-  color: var(--text-main);
-  outline: none;
-  transition: all .2s;
-  font-weight: 600;
-}
-select:focus, .input-num:focus, input[type="date"]:focus, button:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 2px;
-}
-select { min-width: 240px; }
-.input-num { width: 100%; max-width: 140px; text-align: center; background: #f8fafc; font-family: IBM Plex Mono, monospace; font-weight: 700; }
-
-button {
-  border: none; border-radius: 10px; padding: 10px 18px; font-weight: 700; font-size: 13px; letter-spacing: .3px; transition: all .15s; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
-}
-button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px #10182524; }
-button:active { transform: translateY(0); }
-
-.btn-primary { background: var(--signal); color: #fff; }
-.btn-success { background: var(--route); color: #fff; }
-.btn-secondary { background: var(--asphalt); color: var(--text-inverse); }
-.btn-outline { background: #fff; color: var(--signal); border: 1.5px solid var(--signal); }
-
-.aut, .noaut { color: #fff; width: 32px; height: 32px; border-radius: 8px; padding: 0; justify-content: center; font-size: 15px; }
-.aut { background: var(--success); }
-.noaut { background: var(--danger); }
-
-#estado {
-  margin-top: 14px; padding: 11px 16px; border-radius: 10px; background: #eff6ff; color: var(--signal-dark); font-weight: 700; font-size: 13px; display: none; border-left: 4px solid var(--signal);
-}
-
-.carrusel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.carrusel-wrap { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x proximity; }
-.carrusel-wrap::-webkit-scrollbar { height: 6px; }
-.carrusel-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
-
-.asesor-card { scroll-snap-align: start; flex: 0 0 190px; background: #fbfcfe; border: 1px solid var(--border); border-left: 4px solid var(--signal); border-radius: 12px; padding: 14px; cursor: pointer; transition: all .15s; }
-.asesor-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-.asesor-card.activo { border-left-color: var(--route); background: #f0fbfa; box-shadow: 0 0 0 2px #0e9e932e; }
-.asesor-card .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--asphalt); color: #fff; display: flex; align-items: center; justify-content: center; font-family: Bebas Neue; font-size: 15px; margin-bottom: 10px; }
-.asesor-card.activo .avatar { background: var(--route); }
-.asesor-card .nombre { font-size: 12.5px; font-weight: 700; color: var(--ink); line-height: 1.25; margin-bottom: 6px; min-height: 32px; }
-.asesor-card .meta { display: flex; justify-content: space-between; align-items: baseline; }
-.asesor-card .meta .n { font-family: IBM Plex Mono, monospace; font-size: 18px; font-weight: 700; color: var(--signal); }
-.asesor-card.activo .meta .n { color: var(--route-dark); }
-.asesor-card .meta .lbl { font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
-.asesor-card .check { font-size: 11px; color: var(--success); font-weight: 700; margin-top: 6px; display: none; }
-.asesor-card.guardado .check { display: block; }
-
-.cards { display: flex; gap: 16px; margin-bottom: 24px; }
-.card { flex: 1; background: linear-gradient(160deg, var(--asphalt), var(--asphalt-2)); padding: 20px 22px; border-radius: var(--radius); box-shadow: var(--shadow); position: relative; overflow: hidden; }
-.card:after { content: ""; position: absolute; right: -20px; top: -20px; width: 90px; height: 90px; border-radius: 50%; background: #ffffff08; }
-.card h3 { color: #93a2b8; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 10px; }
-.card h2 { color: #fff; font-family: IBM Plex Mono, monospace; font-size: 30px; font-weight: 700; letter-spacing: .5px; }
-.card:nth-child(1) h2 { color: var(--caution); }
-.card:nth-child(2) h2 { color: var(--route); }
-.card:nth-child(3) h2 { color: var(--signal); }
-
-.mapa-panel { margin-bottom: 24px; }
-.mapa-cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
-.mapa-readout { display: flex; gap: 22px; align-items: baseline; }
-.mapa-readout .valor { font-family: IBM Plex Mono, monospace; font-size: 26px; font-weight: 700; color: var(--ink); }
-.mapa-readout .valor.km { color: var(--signal); }
-.mapa-readout .etiqueta { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; display: block; margin-bottom: 2px; }
-#mapa { height: 340px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #f1f4f8; }
-.mapa-vacio { height: 340px; border-radius: 10px; border: 1px dashed var(--border); background: #f6f8fb; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px; }
-.mapa-vacio strong { color: var(--ink); font-size: 14px; }
-
-.leyenda { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-.leyenda span { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
-.leyenda i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.dot-inicio { background: var(--route); }
-.dot-fin { background: var(--signal); }
-.dot-linea { background: var(--asphalt); border-radius: 2px; width: 16px; height: 3px; }
-
-.contenedor { display: flex; gap: 22px; align-items: flex-start; }
-.izq { width: 55%; }
-.der { width: 45%; }
-
-table { width: 100%; border-collapse: collapse; text-align: left; }
-thead { display: table; width: 100%; table-layout: fixed; }
-th { background: #f6f8fb; color: var(--ink); padding: 12px 14px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; border-bottom: 2px solid var(--border); }
-td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text-main); }
-tbody tr { display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background .12s; }
-tbody tr:hover { background: #f6f9fc; }
-#tblAutorizados, #bodyNoAutorizados { display: block; max-height: 380px; overflow-y: auto; }
-
-.motivo-texto { display: block; font-size: 11px; color: var(--danger); font-weight: 600; margin-top: 4px; }
-.inputs-bottom { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-.inputs-bottom label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); display: block; margin-bottom: 6px; }
-
-@media(max-width: 900px) {
-  .contenedor { flex-direction: column; }
-  .izq, .der { width: 100%; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KM Asesores de Emergencia · Despacho</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --bg-page: #eef1f6; --panel-bg: #ffffff; --asphalt: #101825;
+            --asphalt-2: #1c2a3d; --asphalt-soft: #24344a; --ink: #101825;
+            --text-main: #2c3948; --text-muted: #64748b; --text-inverse: #dbe4f0;
+            --border: #e1e6ee; --signal: #1e40af; --signal-dark: #1e3a8a;
+            --route: #0e9e93; --route-dark: #0b8078; --caution: #ffc93c;
+            --success: #10b981; --danger: #e5384f; --radius: 14px;
+            --shadow: 0 10px 30px rgba(16, 24, 37, .06);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-page); color: var(--text-main); font-family: Inter, system-ui, sans-serif; padding: 0 28px 40px; }
+        .mono { font-family: IBM Plex Mono, monospace; }
+        header.dispatch { position: relative; margin: 0 -28px 26px; background: #ffffff; padding: 24px 34px; border-bottom: 1px solid var(--border); }
+        .dispatch-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+        .brandblock { display: flex; align-items: center; gap: 14px; }
+        .brand-tag { width: 46px; height: 46px; border-radius: 10px; background: var(--signal); display: flex; align-items: center; justify-content: center; font-family: Bebas Neue; color: #fff; font-size: 20px; letter-spacing: 1px; box-shadow: 0 0 0 3px #1e40af40; }
+        h1 { color: var(--ink); font-family: Bebas Neue, sans-serif; font-size: 34px; letter-spacing: 3px; line-height: 1; text-transform: uppercase; }
+        .subtitle { color: var(--text-muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+        .live-box { display: flex; align-items: center; gap: 10px; background: #f1f5f9; border: 1px solid var(--border); padding: 8px 14px; border-radius: 999px; }
+        .live-dot { width: 9px; height: 9px; border-radius: 50%; background:var(--success); box-shadow: 0 0 #10b98199; animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 #10b9818c; } 70% { box-shadow: 0 0 0 8px #10b98100; } to { box-shadow: 0 0 #10b98100; } }
+        #reloj { color: var(--ink); font-size: 12px; letter-spacing: 1px; }
+        .panel, .izq, .der, .mapa-panel { background: var(--panel-bg); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); border: 1px solid var(--border); position: relative; }
+        .panel { margin-bottom: 24px; }
+        .panel:before, .izq:before, .der:before, .mapa-panel:before { content: ""; position: absolute; top: 0; left: 18px; right: 18px; height: 3px; border-radius: 0 0 3px 3px; background: var(--signal); }
+        .der:before { background: var(--danger); }
+        .izq:before { background: var(--route); }
+        .mapa-panel:before { background: var(--caution); }
+        h3 { margin-bottom: 16px; color: var(--ink); font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .controles-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
+        .range-picker-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #f8fafc; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border); }
+        .range-picker-row label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+        select, .input-num, input[type="date"] { padding: 9px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); font-size: 13px; color: var(--text-main); outline: none; transition: all .2s; font-weight: 600; }
+        select:focus, .input-num:focus, input[type="date"]:focus, button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+        select { min-width: 240px; }
+        .input-num { width: 100%; max-width: 140px; text-align: center; background: #f8fafc; font-family: IBM Plex Mono, monospace; font-weight: 700; }
+        button { border: none; border-radius: 10px; padding: 10px 18px; font-weight: 700; font-size: 13px; letter-spacing: .3px; transition: all .15s; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px #10182524; }
+        button:active { transform: translateY(0); }
+        .btn-primary { background: var(--signal); color: #fff; }
+        .btn-success { background: var(--route); color: #fff; }
+        .btn-secondary { background: var(--asphalt); color: var(--text-inverse); }
+        .btn-outline { background: #fff; color: var(--signal); border: 1.5px solid var(--signal); }
+        .aut, .noaut { color: #fff; width: 32px; height: 32px; border-radius: 8px; padding: 0; display:flex; align-items: center; justify-content: center; font-size: 15px; }
+        .aut { background: var(--success); }
+        .noaut { background: var(--danger); }
+        #estado { margin-top: 14px; padding: 11px 16px; border-radius: 10px; background:#eff6ff; color: var(--signal-dark); font-weight: 700; font-size: 13px; display: none; border-left: 4px solid var(--signal); }
+        .carrusel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .carrusel-wrap { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x proximity; }
+        .carrusel-wrap::-webkit-scrollbar { height: 6px; }
+        .carrusel-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+        .asesor-card { scroll-snap-align: start; flex: 0 0 190px; background: #fbfcfe; border: 1px solid var(--border); border-left: 4px solid var(--signal); border-radius: 12px; padding: 14px; cursor: pointer; transition: all .15s; }
+        .asesor-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .asesor-card.activo { border-left-color: var(--route); background: #f0fbfa; box-shadow: 0 0 0 2px #0e9e932e; }
+        .asesor-card .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--asphalt); color: #fff; display: flex; align-items: center; justify-content: center; font-family: Bebas Neue; font-size: 15px; margin-bottom: 10px; }
+        .asesor-card.activo .avatar { background: var(--route); }
+        .asesor-card .nombre { font-size: 12.5px; font-weight: 700; color: var(--ink); line-height: 1.25; margin-bottom: 6px; min-height: 32px; }
+        .asesor-card .meta { display: flex; justify-content: space-between; align-items: baseline; }
+        .asesor-card .meta .n { font-family: IBM Plex Mono, monospace; font-size: 18px; font-weight: 700; color: var(--signal); }
+        .asesor-card.activo .meta .n { color: var(--route-dark); }
+        .asesor-card .meta .lbl { font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+        .asesor-card .check { font-size: 11px; color: var(--success); font-weight: 700; margin-top: 6px; display: none; }
+        .asesor-card.guardado .check { display: block; }
+        .cards { display: flex; gap: 16px; margin-bottom: 24px; }
+        .card { flex: 1; background: linear-gradient(160deg, var(--asphalt), var(--asphalt-2)); padding: 20px 22px; border-radius: var(--radius); box-shadow: var(--shadow); position: relative; overflow: hidden; }
+        .card:after { content: ""; position: absolute; right: -20px; top: -20px; width: 90px; height: 90px; border-radius: 50%; background: #ffffff08; }
+        .card h3 { color: #93a2b8; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 10px; }
+        .card h2 { color: #fff; font-family: IBM Plex Mono, monospace; font-size: 30px; font-weight: 700; letter-spacing: .5px; }
+        .card:nth-child(1) h2 { color: var(--caution); }
+        .card:nth-child(2) h2 { color: var(--route); }
+        .card:nth-child(3) h2 { color: var(--signal); }
+        .mapa-panel { margin-bottom: 24px; }
+        .mapa-cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .mapa-readout { display: flex; gap: 22px; align-items: baseline; }
+        .mapa-readout .valor { font-family: IBM Plex Mono, monospace; font-size:26px; font-weight: 700; color: var(--ink); }
+        .mapa-readout .valor.km { color: var(--signal); }
+        .mapa-readout .etiqueta { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; display: block; margin-bottom: 2px; }
+        #mapa { height: 340px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #f1f4f8; }
+        .mapa-vacio { height: 340px; border-radius: 10px; border: 1px dashed var(--border); background: #f6f8fb; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px; }
+        .mapa-vacio strong { color: var(--ink); font-size: 14px; }
+        .leyenda { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+        .leyenda span { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+        .leyenda i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot-inicio { background: var(--route); }
+        .dot-fin { background: var(--signal); }
+        .dot-linea { background: var(--asphalt); border-radius: 2px; width: 16px; height: 3px; }
+        .contenedor { display: flex; gap: 22px; align-items: flex-start; }
+        .izq { width: 55%; }
+        .der { width: 45%; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead { display: table; width: 100%; table-layout: fixed; }
+        th { background: #f6f8fb; color: var(--ink); padding: 12px 14px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; border-bottom: 2px solid var(--border); }
+        td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text-main); }
+        tbody tr { display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background .12s; }
+        tbody tr:hover { background: #f6f9fc; }
+        #tblAutorizados, #bodyNoAutorizados { display: block; max-height: 380px; overflow-y: auto; }
+        .motivo-texto { display: block; font-size: 11px; color: var(--danger); font-weight: 600; margin-top: 4px; }
+        .inputs-bottom { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .inputs-bottom label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+        @media(max-width: 900px) { .contenedor { flex-direction: column; } .izq, .der { width:100%; } }
+    </style>
 </head>
 <body>
+    <header class="dispatch">
+        <div class="dispatch-top">
+            <div class="brandblock">
+                <div class="brand-tag">KM</div>
+                <div>
+                    <h1>Asesores de Emergencia</h1>
+                    <div class="subtitle">Seguros El Roble</div>
+                </div>
+            </div>
+            <div class="live-box">
+                <span class="live-dot"></span>
+                <span id="reloj" class="mono">--:--:--</span>
+            </div>
+        </div>
+    </header>
 
-<header class="dispatch">
-  <div class="dispatch-top">
-    <div class="brandblock">
-      <div class="brand-tag">KM</div>
-      <div>
-        <h1>Asesores de Emergencia</h1>
-        <div class="subtitle">Seguros El Roble</div>
-      </div>
-    </div>
-    <div class="live-box">
-      <span class="live-dot"></span>
-      <span id="reloj" class="mono">--:--:--</span>
-    </div>
-  </div>
-</header>
+    <div class="panel">
+        <div class="range-picker-row">
+            <div>
+                <label>Fecha Siniestro Desde:</label>
+                <input type="date" id="filtroSiniestroDesde">
+            </div>
+            <div>
+                <label>Hasta:</label>
+                <input type="date" id="filtroSiniestroHasta">
+            </div>
+            <button class="btn-primary" onclick="cargarDesdeGoogleSheets()" style="margin-left: auto;">
+                🔄 Cargar datos
+            </button>
+            <button class="btn-outline" onclick="document.getElementById('inputArchivo').click()">
+                📁 Cargar documento
+            </button>
+            
+            <button class="btn-outline" onclick="limpiarEstadoLocal()" style="border-color: var(--danger); color: var(--danger); margin-left: 10px;">
+                🗑️ Empezar de 0
+            </button>
 
-<div class="panel">
-  <!-- FILTRO DE FECHAS SINIETRO Y CARGA DESDE GOOGLE SHEETS -->
-  <div class="range-picker-row">
-    <div>
-      <label>Fecha Siniestro Desde:</label>
-      <input type="date" id="filtroSiniestroDesde">
-    </div>
-    <div>
-      <label>Hasta:</label>
-      <input type="date" id="filtroSiniestroHasta">
-    </div>
-    <button class="btn-primary" onclick="cargarDesdeGoogleSheets()" style="margin-left: auto;">
-      🔄 Cargar datos
-    </button>
-    <button class="btn-outline" onclick="$('inputArchivo').click()">
-      📁 Cargar documento
-    </button>
-    <input type="file" id="inputArchivo" accept=".xlsx,.xls,.csv" style="display:none" onchange="cargarDesdeArchivo(event)">
-  </div>
+            <input type="file" id="inputArchivo" accept=".xlsx,.xls,.csv" style="display:none" onchange="cargarDesdeArchivo(event)">
+        </div> 
 
-  <div class="controles-top">
-    <div>
-      <select id="cmbAsesor" onchange="cmbCambio()">
-        <option value="">Seleccione asesor</option>
-      </select>
+        <div class="controles-top">
+            <div>
+                <select id="cmbAsesor" onchange="cmbCambio()">
+                    <option value="">Seleccione asesor</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-success" onclick="generarPDF()">📄 Asesor de PDF (1 hoja)</button>
+                <button class="btn-secondary" onclick="generarPDFTodos()">💼 PDF general</button>
+            </div>
+        </div>
+        
+        <div id="estado"></div>
+        
+        <div style="margin-top:22px;">
+            <div class="carrusel-header">
+                <h3 style="margin-bottom:0;"> Asesores </h3>
+            </div>
+            <div class="carrusel-wrap" id="carrusel"></div>
+        </div>
     </div>
-    <div style="display:flex; gap:10px;">
-      <button class="btn-success" onclick="generarPDF()">📄 PDF asesor (1 hoja)</button>
-      <button class="btn-secondary" onclick="generarPDFTodos()">💼 PDF general</button>
-    </div>
-  </div>
-  <div id="estado"></div>
 
-  <div style="margin-top:22px;">
-    <div class="carrusel-header">
-      <h3 style="margin-bottom:0;"> Asesores </h3>
+    <div class="cards">
+        <div class="card"><h3>📋 Total reclamos</h3><h2 id="lblTotal">0</h2></div>
+        <div class="card"><h3>✅ Autorizados</h3><h2 id="lblAutorizados">0</h2></div>
+        <div class="card"><h3>💰 Total a pagar</h3><h2 id="lblPago">Q0</h2></div>
     </div>
-    <div class="carrusel-wrap" id="carrusel"></div>
-  </div>
-</div>
 
-<div class="cards">
-  <div class="card"><h3>📋 Total reclamos</h3><h2 id="lblTotal">0</h2></div>
-  <div class="card"><h3>✅ Autorizados</h3><h2 id="lblAutorizados">0</h2></div>
-  <div class="card"><h3>💰 Total a pagar</h3><h2 id="lblPago">Q0</h2></div>
-</div>
+    <div class="mapa-panel">
+        <div class="mapa-cabecera">
+            <h3 style="margin-bottom:0;">Ruta del reclamo</h3>
+            <div class="mapa-readout" id="mapaReadout" style="display:none;">
+                <div><span class="etiqueta">Reclamo</span><span class="valor mono" id="roReclamo">-</span></div>
+                <div><span class="etiqueta">Distancia</span><span class="valor km mono" id="roKm">0 KM</span></div>
+            </div>
+        </div>
+        <div id="mapaVacio" class="mapa-vacio">
+            <strong>Sin ruta seleccionada</strong>
+            <span>Haz clic en cualquier reclamo de las tablas para trazar su ruta en el mapa.</span>
+        </div>
+        <div id="mapa" style="display:none;"></div>
+        <div class="leyenda">
+            <span><i class="dot-inicio"></i> Punto de origen</span>
+            <span><i class="dot-fin"></i> Punto de destino</span>
+            <span><i class="dot-linea"></i> Ruta calculada (OSRM)</span>
+        </div>
+    </div>
 
-<div class="mapa-panel">
-  <div class="mapa-cabecera">
-    <h3 style="margin-bottom:0;">Ruta del reclamo</h3>
-    <div class="mapa-readout" id="mapaReadout" style="display:none;">
-      <div><span class="etiqueta">Reclamo</span><span class="valor mono" id="roReclamo">-</span></div>
-      <div><span class="etiqueta">Distancia</span><span class="valor km mono" id="roKm">0 KM</span></div>
+    <div class="contenedor">
+        <div class="izq">
+            <h3 id="tituloAutorizados">🟢 Autorizados (>30 KM)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:15%">Reclamo</th>
+                        <th style="width:12%">Fecha</th>
+                        <th style="width:28%">Asegurado / Lugar</th>
+                        <th style="width:13%">KM</th>
+                        <th style="width:15%">Pago</th>
+                        <th style="width:17%"></th>
+                    </tr>
+                </thead>
+                <tbody id="tblAutorizados"></tbody>
+            </table>
+        </div>
+        <div class="der">
+            <h3 id="tituloNoAutorizados">🔴 No autorizados (<=30 KM)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:15%">Reclama</th>
+                        <th style="width:12%">Fecha</th>
+                        <th style="width:46%">Lugar / Motivo</th>
+                        <th style="width:15%">KM</th>
+                        <th style="width:12%"></th>
+                    </tr>
+                </thead>
+                <tbody id="bodyNoAutorizados"></tbody>
+            </table>
+            <div class="inputs-bottom">
+                <div>
+                    <label>Ajustes atendidos (Q100)</label>
+                    <input type="number" id="inputAjustes" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
+                </div>
+                <div>
+                    <label>Inspecciones realizadas (Q30)</label>
+                    <input type="number" id="inputInspecciones" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div id="mapaVacio" class="mapa-vacio">
-    <strong>Sin ruta seleccionada</strong>
-    <span>Haz clic en cualquier reclamo de las tablas para trazar su ruta en el mapa.</span>
-  </div>
-  <div id="mapa" style="display:none;"></div>
-  <div class="leyenda">
-    <span><i class="dot-inicio"></i> Punto de origen</span>
-    <span><i class="dot-fin"></i> Punto de destino</span>
-    <span><i class="dot-linea"></i> Ruta calculada (OSRM)</span>
-  </div>
-</div>
 
-<div class="contenedor">
-  <div class="izq">
-    <h3 id="tituloAutorizados">🟢 Autorizados (&gt;30 KM)</h3>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:15%">Reclamo</th>
-          <th style="width:12%">Fecha</th>
-          <th style="width:28%">Asegurado / Lugar</th>
-          <th style="width:13%">KM</th>
-          <th style="width:15%">Pago</th>
-          <th style="width:17%"></th>
-        </tr>
-      </thead>
-      <tbody id="tblAutorizados"></tbody>
-    </table>
-  </div>
-  <div class="der">
-    <h3 id="tituloNoAutorizados">🔴 No autorizados (&lt;=30 KM)</h3>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:15%">Reclamo</th>
-          <th style="width:12%">Fecha</th>
-          <th style="width:46%">Lugar / Motivo</th>
-          <th style="width:15%">KM</th>
-          <th style="width:12%"></th>
-        </tr>
-      </thead>
-      <tbody id="bodyNoAutorizados"></tbody>
-    </table>
+    <div class="panel" id="panelResumen">
+        <h3> Resumen para tiempo extraordinario</h3>
+        <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:18px; max-width:720px;">
+            Genera el PDF consolidado, "Reporte de Siniestro para Cálculo de Tiempo Extraordinario — La Interamericana De Ajustes, SA".
+        </p>
+        <div class="inputs-bottom" style="grid-template-columns: repeat(4, 1fr); margin-top:0; border-top:none; padding-top:0;">
+            <div>
+                <label>No. de reporte</label>
+                <input type="text" id="resNoReporte" class="input-num" style="max-width:100%;" value="01">
+            </div>
+            <div>
+                <label>Del</label>
+                <input type="date" id="resFechaDesde" class="input-num" style="max-width:100%;">
+            </div>
+            <div>
+                <label>Al</label>
+                <input type="date" id="resFechaHasta" class="input-num" style="max-width:100%;">
+            </div>
+            <div style="display:flex; align-items:flex-end;">
+                <button class="btn-primary" style="width:100%; justify-content:center;" onclick="generarResumenPDF()">📑 Descargar resumen PDF</button>
+            </div>
+        </div>
 
-    <div class="inputs-bottom">
-      <div>
-        <label>Ajustes atendidos (Q100)</label>
-        <input type="number" id="inputAjustes" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
-      </div>
-      <div>
-        <label>Inspecciones realizadas (Q30)</label>
-        <input type="number" id="inputInspecciones" class="input-num" min="0" value="0" oninput="autoGuardarAjustes()">
-      </div>
+        <div class="inputs-bottom" style="grid-template-columns: repeat(3, 1fr);">
+            <div>
+                <label>Elaborado por (nombre / cargo)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="resElaboradoNombre" class="input-num" style="max-width:100%; text-align:left;" value="Rudy Perez">
+                    <input type="text" id="resElaboradoCargo" class="input-num" style="max-width:100%; text-align:left;" value="Coordinador Emergencias Automovil">
+                </div>
+            </div>
+            <div>
+                <label>Autorizado por 1 (nombre / cargo)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="resAutNombre1" class="input-num" style="max-width:100%; text-align:left;" value="Alvaro Arreaza">
+                    <input type="text" id="resAutCargo1" class="input-num" style="max-width:100%; text-align:left;" value="Sub.Gerente Área Técnica">
+                </div>
+            </div>
+            <div>
+                <label>Autorizado por 2 (nombre / cargo)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="resAutNombre2" class="input-num" style="max-width:100%; text-align:left;" value="Cristian Arias">
+                    <input type="text" id="resAutCargo2" class="input-num" style="max-width:100%; text-align:left;" value="Jefe Emergencia Automovil">
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-
-<div class="panel" id="panelResumen">
-  <h3> Resumen para tiempo extraordinario</h3>
-  <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:18px; max-width:720px;">
-    Genera el PDF consolidado, 
-    "Reporte de Siniestro para Cálculo de Tiempo Extraordinario — La Interamericana De Ajustes, S.A.".
-  </p>
-
-  <div class="inputs-bottom" style="grid-template-columns: repeat(4, 1fr); margin-top:0; border-top:none; padding-top:0;">
-    <div>
-      <label>No. de reporte</label>
-      <input type="text" id="resNoReporte" class="input-num" style="max-width:100%;" value="01">
-    </div>
-    <div>
-      <label>Del</label>
-      <input type="date" id="resFechaDesde" class="input-num" style="max-width:100%;">
-    </div>
-    <div>
-      <label>Al</label>
-      <input type="date" id="resFechaHasta" class="input-num" style="max-width:100%;">
-    </div>
-    <div style="display:flex; align-items:flex-end;">
-      <button class="btn-primary" style="width:100%; justify-content:center;" onclick="generarResumenPDF()">📑 Descargar resumen PDF</button>
-    </div>
-  </div>
-
-  <div class="inputs-bottom" style="grid-template-columns: repeat(3, 1fr);">
-    <div>
-      <label>Elaborado por (nombre / cargo)</label>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="resElaboradoNombre" class="input-num" style="max-width:100%; text-align:left;" value="Rudy Perez">
-        <input type="text" id="resElaboradoCargo" class="input-num" style="max-width:100%; text-align:left;" value="Coordinador Emergencias Automovil">
-      </div>
-    </div>
-    <div>
-      <label>Autorizado por 1 (nombre / cargo)</label>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="resAutNombre1" class="input-num" style="max-width:100%; text-align:left;" value="Alvaro Arreaza">
-        <input type="text" id="resAutCargo1" class="input-num" style="max-width:100%; text-align:left;" value="Sub.Gerente Area Tecnica">
-      </div>
-    </div>
-    <div>
-      <label>Autorizado por 2 (nombre / cargo)</label>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="resAutNombre2" class="input-num" style="max-width:100%; text-align:left;" value="Cristian Arias">
-        <input type="text" id="resAutCargo2" class="input-num" style="max-width:100%; text-align:left;" value="Jefe Emergencia Automovil">
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
-let registros = [],
-    asesorActual = "",
-    adicionalesAsesores = {},
-    mapaLeaflet = null,
-    capaRuta = null,
-    marcadorInicio = null,
-    marcadorFin = null;
-
+let registros = [], asesorActual = "", adicionalesAsesores = {}, mapaLeaflet = null, capaRuta = null, marcadorInicio = null, marcadorFin = null;
 const GSHEET_URL = "https://docs.google.com/spreadsheets/d/1zMUG_FuqcfMC5gQ30_ru9tUkdxZBKFUBFmAFPGvqeEU/export?format=csv&gid=1428880376";
+const $ = e => document.getElementById(e);
+const PUNTO_CAPITAL = { lat: 14.643056, lon: -90.513333 };
+const UMBRAL_CAPITAL = 30;
+const UMBRAL_INTERIOR = 60;
 
-const $ = e => document.getElementById(e),
-      PUNTO_CAPITAL = { lat: 14.643056, lon: -90.513333 },
-      UMBRAL_CAPITAL = 30,
-      UMBRAL_INTERIOR = 60,
-      PUNTOS_SALIDA = {
-        "RAUL ESPINOZA": { lat: 14.301893, lon: -90.779291 },
-        "JOSUE CLAVERIA": { lat: 14.301893, lon: -90.779291 },
-        "RUBEN PAMAL": { lat: 15.471524455074, lon: -90.384895836031 },
-        "HECTOR GUERRA": { lat: 14.28817, lon: -89.89369 },
-        "DANY PUAC": { lat: 14.858998, lon: -91.52108 },
-        "JOQUIN LOPEZ": { lat: 14.858998, lon: -91.52108 },
-        "MYNOR RAMIREZ": { lat: 14.599527, lon: -89.43441997 },
-        "RONAL SANTOS": { lat: 15.326389, lon: -91.489587 }
-      };
+const PUNTOS_SALIDA = {
+    "RAUL ESPINOZA": { lat: 14.301893, lon: -90.779291 },
+    "JOSUE CLAVERIA": { lat: 14.301893, lon: -90.779291 },
+    "RUBEN PAMAL": { lat: 15.471524455074, lon: -90.384895836031 },
+    "HECTOR GUERRA": { lat: 14.28817, lon: -89.89369 },
+    "DANY PUAC": { lat: 14.858998, lon: -91.52108 },
+    "JOAQUIN LOPEZ": { lat: 14.858998, lon: -91.52108 },
+    "MYNOR RAMIREZ": { lat: 14.599527, lon: -89.43441997 },
+    "RONAL SANTOS": { lat: 15.326389, lon: -91.489587 }
+};
 
 function obtenerPuntoSalida(e) {
-  const t = String(e || "").trim().toUpperCase();
-  return PUNTOS_SALIDA[t] || PUNTO_CAPITAL;
+    const t = normalizarNombre(e);
+    return PUNTOS_SALIDA[t] || PUNTO_CAPITAL;
 }
 
 function obtenerUmbralKm(e, l) {
-  const loc = String(l || "").trim().toUpperCase();
-  if (loc.includes("INTERIOR")) return { esInterior: true, umbral: UMBRAL_INTERIOR };
-  if (loc.includes("CAPITAL")) return { esInterior: false, umbral: UMBRAL_CAPITAL };
-  const o = obtenerPuntoSalida(e) !== PUNTO_CAPITAL;
-  return { esInterior: o, umbral: o ? UMBRAL_INTERIOR : UMBRAL_CAPITAL };
+    const loc = String(l || "").trim().toUpperCase();
+    if (loc.includes("INTERIOR")) return { esInterior: true, umbral: UMBRAL_INTERIOR };
+    if (loc.includes("CAPITAL")) return { esInterior: false, umbral: UMBRAL_CAPITAL };
+    const o = obtenerPuntoSalida(e) !== PUNTO_CAPITAL;
+    return { esInterior: o, umbral: o ? UMBRAL_INTERIOR : UMBRAL_CAPITAL };
 }
 
 function normalizarNombre(e) {
-  return String(e || "").trim().toUpperCase().replace(/\s+/g, " ");
+    return String(e || "")
+        .trim()
+        .toUpperCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+        .replace(/\s+/g, " ");
 }
 
 const ROSTER_ASESORES = [
-  { cod: "20206", nombre: "Nelson Melendez" },
-  { cod: "26848", nombre: "Marco Surque" },
-  { cod: "24349", nombre: "Christian Garcia" },
-  { cod: "29353", nombre: "Julio Marin" },
-  { cod: "23062", nombre: "Alvaro Choy" },
-  { cod: "27705", nombre: "Marvin Del Cid" },
-  { cod: "27708", nombre: "Francisco Morales" },
-  { cod: "23031", nombre: "Gary Sipac" },
-  { cod: "58385", nombre: "Yocimar Pineda" },
-  { cod: "55309", nombre: "Carlos Zapata" },
-  { cod: "38079", nombre: "Sergio Estuardo de Leon" },
-  { cod: "52773", nombre: "Miguel Corea" },
-  { cod: "47602", nombre: "Luis Navichoc" },
-  { cod: "51988", nombre: "Helber Archila" },
-  { cod: "57012", nombre: "Alejandro Lopez" },
-  { cod: "61176", nombre: "Franklin Gomez" },
-  { cod: "55802", nombre: "Diego Gonzalez" },
-  { cod: "41035", nombre: "Sergio Enriquez" },
-  { cod: "21545", nombre: "Ruben Pamal" },
-  { cod: "39441", nombre: "Raul Espinoza" },
-  { cod: "20219", nombre: "Julio Giron" },
-  { cod: "36929", nombre: "Walter Morataya" },
-  { cod: "74133", nombre: "Hector Guerra" },
-  { cod: "22442", nombre: "Geremias Reyes" },
-  { cod: "78149", nombre: "Dany Puac" },
-  { cod: "83119", nombre: "Josue Claveria" },
-  { cod: "83327", nombre: "Mynor Ramirez" },
-  { cod: "20466", nombre: "Joaquin Lopez" }
+    { cod: "20206", nombre: "Nelson Melendez" },
+    { cod: "26848", nombre: "Marco Surque" },
+    { cod: "24349", nombre: "Christian García" },
+    { cod: "29353", nombre: "Julio Marin" },
+    { cod: "23062", nombre: "Alvaro Choy" },
+    { cod: "27705", nombre: "Marvin Del Cid" },
+    { cod: "27708", nombre: "Francisco Morales" },
+    { cod: "23031", nombre: "Gary Sipac" },
+    { cod: "58385", nombre: "Yocimar Pineda" },
+    { cod: "55309", nombre: "Carlos Zapata" },
+    { cod: "38079", nombre: "Sergio Estuardo de León" },
+    { cod: "52773", nombre: "Miguel Corea" },
+    { cod: "47602", nombre: "Luis Navichoc" },
+    { cod: "51988", nombre: "Helber Archila" },
+    { cod: "57012", nombre: "Alejandro López" },
+    { cod: "61176", nombre: "Franklin Gomez" },
+    { cod: "55802", nombre: "Diego González" },
+    { cod: "41035", nombre: "Sergio Enriquez" },
+    { cod: "21545", nombre: "Ruben Pamal" },
+    { cod: "39441", nombre: "Raul Espinoza" },
+    { cod: "20219", nombre: "Julio Girón" },
+    { cod: "36929", nombre: "Walter Morataya" },
+    { cod: "74133", nombre: "Hector Guerra" },
+    { cod: "22442", nombre: "Geremias Reyes" },
+    { cod: "78149", nombre: "Dany Puac" },
+    { cod: "83119", nombre: "Josue Claveria" },
+    { cod: "83327", nombre: "Mynor Ramirez" },
+    { cod: "20466", nombre: "Joaquín López" },
+    { cod: "N/A", nombre: "José Linares" }, 
+    { cod: "N/A", nombre: "Mynor García" }
 ];
 
 function tickReloj() {
-  const e = new Date;
-  $("reloj").textContent = e.toLocaleTimeString("es-GT", { hour12: false });
+    const e = new Date();
+    $("reloj").textContent = e.toLocaleTimeString("es-GT", { hour12: false });
 }
-
-setInterval(tickReloj, 1e3);
+setInterval(tickReloj, 1000);
 tickReloj();
+
 inicializarFechasFiltro();
 
 function inicializarFechasFiltro() {
-  const e = new Date,
+    const e = new Date(),
         t = new Date(e.getFullYear(), e.getMonth(), 1),
         o = new Date(e.getFullYear(), e.getMonth() + 1, 0),
         a = r => r.toISOString().slice(0, 10);
-        
-  $("filtroSiniestroDesde").value = a(t);
-  $("filtroSiniestroHasta").value = a(o);
-  
-  $("resFechaDesde").value = a(t);
-  $("resFechaHasta").value = a(o);
+    $("filtroSiniestroDesde").value = a(t);
+    $("filtroSiniestroHasta").value = a(o);
+    $("resFechaDesde").value = a(t);
+    $("resFechaHasta").value = a(o);
 }
 
 function formatearFechaExcel(e) {
-  if (e == null) return "";
-  let t = String(e).trim();
-  if (!isNaN(t) && t.length > 0 && parseFloat(t) > 3e4) {
-    let o = new Date((parseFloat(t) - 25569) * 86400 * 1e3),
-        a = String(o.getDate()).padStart(2, "0"),
-        r = String(o.getMonth() + 1).padStart(2, "0"),
-        s = o.getFullYear();
-    return `${a}/${r}/${s}`;
-  }
-  return t;
+    if (e == null) return "";
+    let t = String(e).trim();
+    if (!isNaN(t) && t.length > 0 && parseFloat(t) > 30000) {
+        let o = new Date((parseFloat(t) - 25569) * 86400 * 1000),
+            a = String(o.getUTCDate()).padStart(2, "0"),
+            r = String(o.getUTCMonth() + 1).padStart(2, "0"),
+            s = o.getUTCFullYear();
+        return `${a}/${r}/${s}`;
+    }
+    return t;
 }
 
 function parsearFechaAObjeto(strFecha) {
-  if (!strFecha) return null;
-  const f = String(strFecha).trim();
-  if (f.includes("/")) {
-    const p = f.split("/");
-    if (p.length === 3) return new Date(p[2], p[1] - 1, p[0]);
-  } else if (f.includes("-")) {
-    const p = f.split("-");
-    if (p.length === 3) {
-      if (p[0].length === 4) return new Date(p[0], p[1] - 1, p[2]);
-      return new Date(p[2], p[1] - 1, p[0]);
+    if (!strFecha) return null;
+    const f = String(strFecha).trim();
+    if (f.includes("/")) {
+        const p = f.split("/");
+        if (p.length === 3) return new Date(p[2], p[1] - 1, p[0]);
+    } else if (f.includes("-")) {
+        const p = f.split("-");
+        if (p.length === 3) {
+            if (p[0].length === 4) return new Date(p[0], p[1] - 1, p[2]);
+            return new Date(p[2], p[1] - 1, p[0]);
+        }
     }
-  }
-  return null;
+    return null;
 }
 
 function limpiarCoordenada(e) {
-  if (e == null) return null;
-  let t = String(e).trim().replace(/,/g, ".");
-  const partes = t.split(".");
-  if (partes.length > 2) {
-    t = partes[0] + "." + partes.slice(1).join("");
-  }
-  let o = parseFloat(t);
-  return isNaN(o) ? null : o;
+    if (e == null) return null;
+    let t = String(e).trim().replace(/,/g, ".");
+    const partes = t.split(".");
+    if (partes.length > 2) {
+        t = partes[0] + "." + partes.slice(1).join("");
+    }
+    let o = parseFloat(t);
+    return isNaN(o) ? null : o;
 }
 
 async function cargarDesdeGoogleSheets() {
-  const t = $("estado");
-  t.style.display = "block";
-  t.innerText = "⏳ Conectando con Google Sheets y filtrando por fecha de siniestro...";
-
-  try {
-    const respuesta = await fetch(GSHEET_URL);
-    if (!respuesta.ok) throw new Error("No se pudo obtener el archivo de Google Sheets. Verifique permisos.");
-
-    const arrayBuf = await respuesta.arrayBuffer();
-    const workbook = XLSX.read(arrayBuf, { type: "array" });
-    await procesarLibro(workbook, "Google Sheets");
-  } catch (o) {
-    t.innerText = "❌ Error al cargar desde Google Sheets: " + o.message;
-  }
+    const t = $("estado");
+    t.style.display = "block";
+    t.innerText = "⏳ Conectando con Google Sheets y leyendo datos...";
+    try {
+        const respuesta = await fetch(GSHEET_URL);
+        if (!respuesta.ok) throw new Error("No se pudo obtener el archivo. Verifique permisos.");
+        const arrayBuf = await respuesta.arrayBuffer();
+        const workbook = XLSX.read(arrayBuf, { type: "array" });
+        await procesarLibro(workbook, "Google Sheets");
+    } catch (o) {
+        t.innerText = "❌ Error al cargar desde Google Sheets: " + o.message;
+    }
 }
 
 async function cargarDesdeArchivo(evento) {
-  const archivo = evento.target.files && evento.target.files[0];
-  if (!archivo) return;
-
-  const t = $("estado");
-  t.style.display = "block";
-  t.innerText = "⏳ Leyendo documento local y filtrando por fecha de siniestro...";
-
-  try {
-    const arrayBuf = await archivo.arrayBuffer();
-    const workbook = XLSX.read(arrayBuf, { type: "array" });
-    await procesarLibro(workbook, archivo.name);
-  } catch (o) {
-    t.innerText = "❌ Error al leer el documento: " + o.message;
-  } finally {
-    evento.target.value = "";
-  }
+    const archivo = evento.target.files && evento.target.files[0];
+    if (!archivo) return;
+    const t = $("estado");
+    t.style.display = "block";
+    t.innerText = "⏳ Leyendo documento local y procesando rutas...";
+    try {
+        const arrayBuf = await archivo.arrayBuffer();
+        const workbook = XLSX.read(arrayBuf, { type: "array" });
+        await procesarLibro(workbook, archivo.name);
+    } catch (o) {
+        t.innerText = "❌ Error al leer el documento: " + o.message;
+    } finally {
+        evento.target.value = "";
+    }
 }
 
 async function procesarLibro(workbook, origenNombre) {
-  registros = [];
-  adicionalesAsesores = {};
-  ocultarMapa();
+    registros = [];
+    adicionalesAsesores = {};
+    ocultarMapa();
+    
+    // Obtenemos los valores de las fechas del filtro superior
+    const fDesdeStr = $("filtroSiniestroDesde").value;
+    const fHastaStr = $("filtroSiniestroHasta").value;
+    const fDesde = fDesdeStr ? new Date(fDesdeStr + "T00:00:00") : null;
+    const fHasta = fHastaStr ? new Date(fHastaStr + "T23:59:59") : null;
+    const t = $("estado");
 
-  const fDesdeStr = $("filtroSiniestroDesde").value;
-  const fHastaStr = $("filtroSiniestroHasta").value;
-
-  const fDesde = fDesdeStr ? new Date(fDesdeStr + "T00:00:00") : null;
-  const fHasta = fHastaStr ? new Date(fHastaStr + "T23:59:59") : null;
-
-  const t = $("estado");
-
-  try {
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const filas = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-    if (filas.length < 2) throw new Error("El documento no contiene datos suficientes.");
-
-    const asesoresUnicos = new Set();
-
-    for (let g = 1; g < filas.length; g++) {
-      const u = filas[g];
-      if (!u || u.length === 0) continue;
-
-      const d = formatearFechaExcel(u[3]); // Fecha de Siniestro
-
-      // Filtrar por rango de fecha de siniestro
-      if (fDesde || fHasta) {
-        const objFecha = parsearFechaAObjeto(d);
-        if (objFecha) {
-          if (fDesde && objFecha < fDesde) continue;
-          if (fHasta && objFecha > fHasta) continue;
-        }
-      }
-
-      const y = String(u[0] || "").trim(),
-            loc = String(u[1] || "").trim(),
-            m = String(u[2] || "SIN ASESOR").trim(),
-            dAt = formatearFechaExcel(u[4]),
-            S = String(u[5] || "").trim(),
-            v = String(u[6] || "").trim(),
-            i = String(u[7] || "").trim(),
-            N = String(u[8] || "").trim(),
-            b = obtenerPuntoSalida(m),
-            T = b.lat,
-            c = b.lon,
-            p = limpiarCoordenada(u[9]),
-            E = limpiarCoordenada(u[10]),
-            { esInterior: x, umbral: R } = obtenerUmbralKm(m, loc),
-            F = String(u[11] || "0");
-
-      if (!S && !m) continue;
-
-      let C = 0, n = null;
-      if (T && c && p && E) {
-        const A = `https://router.project-osrm.org/route/v1/driving/${c},${T};${E},${p}?overview=full&geometries=geojson`;
-        try {
-          const f = await fetch(A);
-          if (f.ok) {
-            const h = await f.json();
-            if (h?.routes?.length) {
-              C = Number((h.routes[0].distance / 1e3).toFixed(2));
-              if (h.routes[0].geometry?.coordinates) {
-                n = h.routes[0].geometry.coordinates.map(z => [z[1], z[0]]);
-              }
+    try {
+        const hoja = workbook.Sheets[workbook.SheetNames[0]];
+        const filas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+        if (filas.length < 2) throw new Error("El documento no contiene datos suficientes.");
+        
+        let reclamosTotalesEnExcel = 0;
+        const asesoresUnicos = new Set();
+        
+        for (let g = 1; g < filas.length; g++) {
+            const u = filas[g];
+            if (!u || u.length === 0) continue;
+            
+            const d = formatearFechaExcel(u[3]);
+            if (!d) continue; // Saltamos si no hay fecha válida
+            
+            reclamosTotalesEnExcel++;
+            
+            // Filtro por fecha de Siniestro
+            if (fDesde || fHasta) {
+                const objFecha = parsearFechaAObjeto(d);
+                if (objFecha) {
+                    if (fDesde && objFecha < fDesde) continue;
+                    if (fHasta && objFecha > fHasta) continue;
+                }
             }
-          }
-        } catch (f) {
-          console.warn(f);
+            
+            const y = String(u[0] || "").trim(),
+                  loc = String(u[1] || "").trim(),
+                  m = String(u[2] || "SIN ASESOR").trim(),
+                  dAt = formatearFechaExcel(u[4]),
+                  S = String(u[5] || "").trim(),
+                  v = String(u[6] || "").trim(),
+                  i = String(u[7] || "").trim(),
+                  N = String(u[8] || "").trim(),
+                  b = obtenerPuntoSalida(m),
+                  T = b.lat,
+                  c = b.lon,
+                  p = limpiarCoordenada(u[9]),
+                  E = limpiarCoordenada(u[10]),
+                  { esInterior: x, umbral: R } = obtenerUmbralKm(m, loc),
+                  F = String(u[11] || "0");
+                  
+            if (!S && !m) continue;
+            
+            let C = 0, n = null;
+            if (T && c && p && E) {
+                const A = `https://router.project-osrm.org/route/v1/driving/${c},${T};${E},${p}?overview=full&geometries=geojson`;
+                try {
+                    const f = await fetch(A);
+                    if (f.ok) {
+                        const h = await f.json();
+                        if (h?.routes?.length) {
+                            C = Number((h.routes[0].distance / 1000).toFixed(2));
+                            if (h.routes[0].geometry?.coordinates) {
+                                n = h.routes[0].geometry.coordinates.map(z => [z[1], z[0]]);
+                            }
+                        }
+                    }
+                } catch (f) { console.warn("Error OSRM", f); }
+            }
+            
+            registros.push({
+                numId: y, reclamo: S, asesor: m, fecha: d, fechaAtencion: dAt,
+                localidad: loc, poliza: v, asegurado: i, latInicio: T, lonInicio: c,
+                latFinal: p, lonFinal: E, lugar: N, valor: F, km: C, ruta: n,
+                esInterior: x, umbralKm: R, autorizado: C > R, tipo: "Automático", motivo: ""
+            });
+            asesoresUnicos.add(m);
+            if (!adicionalesAsesores[m]) { adicionalesAsesores[m] = { ajustes: 0, inspecciones: 0, guardado: false }; }
         }
-      }
-
-      registros.push({
-        numId: y, reclamo: S, asesor: m, fecha: d, fechaAtencion: dAt,
-        localidad: loc, poliza: v, asegurado: i, latInicio: T, lonInicio: c,
-        latFinal: p, lonFinal: E, lugar: N, valor: F, km: C, ruta: n,
-        esInterior: x, umbralKm: R, autorizado: C > R, tipo: "Automático", motivo: ""
-      });
-
-      asesoresUnicos.add(m);
-      if (!adicionalesAsesores[m]) {
-        adicionalesAsesores[m] = { ajustes: 0, inspecciones: 0, guardado: false };
-      }
+        
+        restaurarEstadoLocal();
+        buildSelector(asesoresUnicos);
+        renderCarrusel(asesoresUnicos);
+        
+        // REVISIÓN DEL FILTRO DE FECHA PARA AVISARLE AL USUARIO
+        if (registros.length === 0) {
+            if(reclamosTotalesEnExcel > 0) {
+                 t.style.backgroundColor = "#fffbeb";
+                 t.style.color = "#b45309";
+                 t.style.borderLeftColor = "#f59e0b";
+                 t.innerHTML = `⚠️ <b>El Excel tiene ${reclamosTotalesEnExcel} reclamos</b>, pero NINGUNO corresponde a las fechas de Siniestro filtradas arriba (Del ${fDesdeStr} al ${fHastaStr}). Cambia las fechas y vuelve a cargar el archivo.`;
+            } else {
+                 t.innerText = "⚠️ El documento parece estar vacío o no tiene el formato correcto.";
+            }
+        } else {
+            t.style.backgroundColor = "#eff6ff";
+            t.style.color = "var(--signal-dark)";
+            t.style.borderLeftColor = "var(--signal)";
+            t.innerText = `✅ Se cargaron ${registros.length} registros desde "${origenNombre}" (Filtro aplicado).`;
+        }
+        
+        if (asesorActual && asesoresUnicos.has(asesorActual)) {
+            filtrarAsesor();
+        } else {
+            $("cmbAsesor").value = "";
+            filtrarAsesor();
+        }
+        
+        // Dejar el estado en pantalla por más tiempo si hay advertencia
+        setTimeout(() => t.style.display = "none", registros.length === 0 ? 10000 : 4000);
+        
+    } catch (o) {
+        t.innerText = "❌ Error al procesar el documento: " + o.message;
     }
-
-    buildSelector(asesoresUnicos);
-    renderCarrusel(asesoresUnicos);
-
-    if (registros.length === 0) {
-      t.innerText = "⚠️ No se encontraron siniestros en las fechas seleccionadas.";
-    } else {
-      t.innerText = `✅ Se cargaron ${registros.length} registros desde "${origenNombre}" para el rango de fechas seleccionado.`;
-    }
-
-    if (asesorActual && asesoresUnicos.has(asesorActual)) {
-      filtrarAsesor();
-    } else {
-      $("cmbAsesor").value = "";
-      filtrarAsesor();
-    }
-
-    setTimeout(() => t.style.display = "none", 4e3);
-  } catch (o) {
-    t.innerText = "❌ Error al procesar el documento: " + o.message;
-  }
 }
 
 function buildSelector(e) {
-  let t = $("cmbAsesor");
-  t.innerHTML = '<option value="">Seleccione asesor</option>';
-  [...e].sort().forEach(o => {
-    let a = registros.filter(s => s.asesor === o && s.autorizado).length,
-        r = document.createElement("option");
-    r.value = o;
-    r.textContent = `${o} (${a})`;
-    t.appendChild(r);
-  });
+    let t = $("cmbAsesor");
+    t.innerHTML = '<option value="">Seleccione asesor</option>';
+    [...e].sort().forEach(o => {
+        let a = registros.filter(s => s.asesor === o && s.autorizado).length,
+            r = document.createElement("option");
+        r.value = o;
+        r.textContent = `${o} (${a})`;
+        t.appendChild(r);
+    });
 }
 
 function renderCarrusel(e) {
-  const t = $("carrusel"),
-        o = [...e].sort();
-  t.innerHTML = o.map(a => {
-    let r = registros.filter(l => l.asesor === a && l.autorizado).length,
-        s = a.trim().charAt(0).toUpperCase() || "?";
-    return `<div class="asesor-card" data-asesor="${a.replace(/"/g, "&quot;")}" onclick="seleccionarDesdeCarrusel('${a.replace(/'/g, "\\'")}')">
-      <div class="avatar">${s}</div>
-      <div class="nombre">${a}</div>
-      <div class="meta"><span class="n">${r}</span><span class="lbl">Autorizados</span></div>
-      <div class="check">✓ Ajustes guardados</div>
-    </div>`;
-  }).join("");
+    const t = $("carrusel"), o = [...e].sort();
+    t.innerHTML = o.map(a => {
+        let r = registros.filter(l => l.asesor === a && l.autorizado).length,
+            s = a.trim().charAt(0).toUpperCase() || "?";
+        return `<div class="asesor-card" data-asesor="${a.replace(/"/g, "&quot;")}" onclick="seleccionarDesdeCarrusel('${a.replace(/'/g, "\\'")}')">
+            <div class="avatar">${s}</div>
+            <div class="nombre">${a}</div>
+            <div class="meta"><span class="n">${r}</span><span class="lbl">Autorizados</span></div>
+            <div class="check"> ✓ Ajustes guardados</div>
+        </div>`;
+    }).join("");
 }
 
 function seleccionarDesdeCarrusel(e) {
-  $("cmbAsesor").value = e;
-  cmbCambio();
+    $("cmbAsesor").value = e;
+    cmbCambio();
 }
 
-function cmbCambio() {
-  filtrarAsesor();
-}
+function cmbCambio() { filtrarAsesor(); }
 
 function actualizarColoresSelector() {
-  Array.from($("cmbAsesor").options).forEach(e => {
-    if (!e.value) return;
-    let t = adicionalesAsesores[e.value],
-        o = registros.filter(a => a.asesor === e.value && a.autorizado).length;
-    if (t && t.guardado) {
-      e.style.color = "#0e9e93";
-      e.style.fontWeight = "bold";
-      e.textContent = `✓ ${e.value} (${o})`;
-    } else {
-      e.style.color = "";
-      e.style.fontWeight = "";
-      e.textContent = `${e.value} (${o})`;
-    }
-  });
-  
-  document.querySelectorAll(".asesor-card").forEach(e => {
-    const t = e.getAttribute("data-asesor"),
-          o = adicionalesAsesores[t];
-    e.classList.toggle("guardado", !!(o && o.guardado));
-    e.classList.toggle("activo", t === asesorActual);
-  });
+    Array.from($("cmbAsesor").options).forEach(e => {
+        if (!e.value) return;
+        let t = adicionalesAsesores[e.value],
+            o = registros.filter(a => a.asesor === e.value && a.autorizado).length;
+        if (t && t.guardado) {
+            e.style.color = "#0e9e93";
+            e.style.fontWeight = "bold";
+            e.textContent = `✓ ${e.value} (${o})`;
+        } else {
+            e.style.color = "";
+            e.style.fontWeight = "";
+            e.textContent = `${e.value} (${o})`;
+        }
+    });
+    
+    document.querySelectorAll(".asesor-card").forEach(e => {
+        const t = e.getAttribute("data-asesor"), o = adicionalesAsesores[t];
+        e.classList.toggle("guardado", !!(o && o.guardado));
+        e.classList.toggle("activo", t === asesorActual);
+    });
 }
 
 function filtrarAsesor() {
-  asesorActual = $("cmbAsesor").value;
-  if (!asesorActual) {
-    $("lblTotal").innerText = $("lblAutorizados").innerText = 0;
-    $("lblPago").innerText = "Q0";
-    $("tblAutorizados").innerHTML = $("bodyNoAutorizados").innerHTML = "";
-    $("tituloAutorizados").innerHTML = "🟢 Autorizados (&gt;30 KM)";
-    $("tituloNoAutorizados").innerHTML = "🔴 No autorizados (&lt;=30 KM)";
+    asesorActual = $("cmbAsesor").value;
+    if (!asesorActual) {
+        $("lblTotal").innerText = $("lblAutorizados").innerText = 0;
+        $("lblPago").innerText = "Q0";
+        $("tblAutorizados").innerHTML = $("bodyNoAutorizados").innerHTML = "";
+        $("tituloAutorizados").innerHTML = "🟢 Autorizados (>30 KM)";
+        $("tituloNoAutorizados").innerHTML = "🔴 No autorizados (<=30 KM)";
+        actualizarColoresSelector();
+        return;
+    }
+    
+    let e = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 },
+        t = registros.filter(l => l.asesor === asesorActual),
+        o = t.filter(l => l.autorizado),
+        a = t.filter(l => !l.autorizado),
+        r = o.length * 300 + e.ajustes * 100 + e.inspecciones * 30;
+        
+    const s = t.length ? t[0].umbralKm : obtenerUmbralKm(asesorActual).umbral;
+    
+    $("tituloAutorizados").innerHTML = `🟢 Autorizados (>${s} KM)`;
+    $("tituloNoAutorizados").innerHTML = `🔴 No autorizados (<=${s} KM)`;
+    $("inputAjustes").value = e.ajustes;
+    $("inputInspecciones").value = e.inspecciones;
+    $("lblTotal").innerText = t.length;
+    $("lblAutorizados").innerText = o.length;
+    $("lblPago").innerText = "Q" + r.toLocaleString();
+    
+    $("tblAutorizados").innerHTML = o.map(l => 
+        `<tr onclick="mostrarRuta('${l.reclamo.replace(/'/g, "\\'")}')">
+            <td style="width:15%">${l.reclamo}</td>
+            <td style="width:12%">${l.fecha}</td>
+            <td style="width:28%"><b>${l.asegurado}</b><br><small>${l.lugar}</small>${l.motivo ? `<br><span class="motivo-texto">Motivo: ${l.motivo}</span>` : ""}</td>
+            <td style="width:13%">${l.km} KM</td>
+            <td style="width:15%">Q300</td>
+            <td style="width:17%"><button class="noaut" onclick="event.stopPropagation(); cambiarEstado('${l.reclamo.replace(/'/g, "\\'")}', false)">←</button></td>
+        </tr>`
+    ).join("");
+    
+    $("bodyNoAutorizados").innerHTML = a.map(l => 
+        `<tr onclick="mostrarRuta('${l.reclamo.replace(/'/g, "\\'")}')">
+            <td style="width:15%">${l.reclamo}</td>
+            <td style="width:12%">${l.fecha}</td>
+            <td style="width:46%">${l.lugar}${l.motivo ? `<span class="motivo-texto"><br>Motivo: ${l.motivo}</span>` : ""}</td>
+            <td style="width:15%">${l.km} KM</td>
+            <td style="width:12%"><button class="aut" onclick="event.stopPropagation(); cambiarEstado('${l.reclamo.replace(/'/g, "\\'")}', true)">→</button></td>
+        </tr>`
+    ).join("");
+    
     actualizarColoresSelector();
-    return;
-  }
-  
-  let e = adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 },
-      t = registros.filter(l => l.asesor === asesorActual),
-      o = t.filter(l => l.autorizado),
-      a = t.filter(l => !l.autorizado),
-      r = o.length * 300 + e.ajustes * 100 + e.inspecciones * 30;
-      
-  const s = t.length ? t[0].umbralKm : obtenerUmbralKm(asesorActual).umbral;
-  
-  $("tituloAutorizados").innerHTML = `🟢 Autorizados (&gt;${s} KM)`;
-  $("tituloNoAutorizados").innerHTML = `🔴 No autorizados (&lt;=${s} KM)`;
-  $("inputAjustes").value = e.ajustes;
-  $("inputInspecciones").value = e.inspecciones;
-  $("lblTotal").innerText = t.length;
-  $("lblAutorizados").innerText = o.length;
-  $("lblPago").innerText = "Q" + r.toLocaleString();
-  
-  $("tblAutorizados").innerHTML = o.map(l => `<tr onclick="mostrarRuta('${l.reclamo.replace(/'/g, "\\'")}')">
-    <td style="width:15%">${l.reclamo}</td>
-    <td style="width:12%">${l.fecha}</td>
-    <td style="width:28%"><b>${l.asegurado}</b><br><small>${l.lugar}</small></td>
-    <td style="width:13%">${l.km} KM</td>
-    <td style="width:15%">Q300</td>
-    <td style="width:17%"><button class="noaut" onclick="event.stopPropagation(); cambiarEstado('${l.reclamo.replace(/'/g, "\\'")}',false)">←</button></td>
-  </tr>`).join("");
-  
-  $("bodyNoAutorizados").innerHTML = a.map(l => `<tr onclick="mostrarRuta('${l.reclamo.replace(/'/g, "\\'")}')">
-    <td style="width:15%">${l.reclamo}</td>
-    <td style="width:12%">${l.fecha}</td>
-    <td style="width:46%">${l.lugar}${l.motivo ? `<span class="motivo-texto">Motivo: ${l.motivo}</span>` : ""}</td>
-    <td style="width:15%">${l.km} KM</td>
-    <td style="width:12%"><button class="aut" onclick="event.stopPropagation(); cambiarEstado('${l.reclamo.replace(/'/g, "\\'")}',true)">→</button></td>
-  </tr>`).join("");
-  
-  actualizarColoresSelector();
 }
 
 function autoGuardarAjustes() {
-  if (!asesorActual) return;
-  let e = parseInt($("inputAjustes").value) || 0,
-      t = parseInt($("inputInspecciones").value) || 0;
-  adicionalesAsesores[asesorActual] = { ajustes: e, inspecciones: t, guardado: e > 0 || t > 0 };
-  actualizarColoresSelector();
-  let o = registros.filter(a => a.asesor === asesorActual && a.autorizado).length;
-  $("lblPago").innerText = "Q" + (o * 300 + e * 100 + t * 30).toLocaleString();
+    if (!asesorActual) return;
+    let e = parseInt($("inputAjustes").value) || 0,
+        t = parseInt($("inputInspecciones").value) || 0;
+    adicionalesAsesores[asesorActual] = { ajustes: e, inspecciones: t, guardado: e > 0 || t > 0 };
+    actualizarColoresSelector();
+    let o = registros.filter(a => a.asesor === asesorActual && a.autorizado).length;
+    $("lblPago").innerText = "Q" + (o * 300 + e * 100 + t * 30).toLocaleString();
+    
+    guardarEstadoLocal(); 
 }
 
 function cambiarEstado(e, t) {
-  let o = registros.find(a => a.reclamo === e);
-  if (o) {
-    let a = prompt(`Motivo de la acción para Reclamo N° ${e}:`);
-    if (a === null) return;
-    o.motivo = a.trim() || (t ? "Autorizado Manual" : "Rechazado");
-    o.autorizado = t;
-    o.tipo = t ? "Manual" : "Automático";
-    filtrarAsesor();
-    actualizarColoresSelector();
-    renderCarrusel(new Set(registros.map(r => r.asesor)));
-    actualizarColoresSelector();
-  }
+    let o = registros.find(a => a.reclamo === e);
+    if (o) {
+        let a = prompt(`Motivo de la acción para Reclamo N° ${e}:`);
+        if (a === null) return;
+        o.motivo = a.trim() || (t ? "Autorizado Manual" : "Rechazado");
+        o.autorizado = t;
+        o.tipo = t ? "Manual" : "Automático";
+        filtrarAsesor();
+        renderCarrusel(new Set(registros.map(r => r.asesor)));
+        actualizarColoresSelector();
+        
+        guardarEstadoLocal(); 
+    }
 }
 
 function ocultarMapa() {
-  $("mapa").style.display = "none";
-  $("mapaVacio").style.display = "flex";
-  $("mapaReadout").style.display = "none";
+    $("mapa").style.display = "none";
+    $("mapaVacio").style.display = "flex";
+    $("mapaReadout").style.display = "none";
 }
 
 function mostrarRuta(e) {
-  const t = registros.find(s => s.reclamo === e);
-  if (!t) return;
-  if (!t.latInicio || !t.lonInicio || !t.latFinal || !t.lonFinal) {
-    alert("Este reclamo no tiene coordenadas completas para trazar la ruta.");
-    return;
-  }
-  $("mapaVacio").style.display = "none";
-  $("mapa").style.display = "block";
-  $("mapaReadout").style.display = "flex";
-  $("roReclamo").textContent = t.reclamo;
-  $("roKm").textContent = t.km + " KM";
-  
-  if (mapaLeaflet) {
-    mapaLeaflet.invalidateSize();
-  } else {
-    mapaLeaflet = L.map("mapa", { scrollWheelZoom: false });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap",
-      maxZoom: 19
-    }).addTo(mapaLeaflet);
-  }
-  
-  if (capaRuta) mapaLeaflet.removeLayer(capaRuta);
-  if (marcadorInicio) mapaLeaflet.removeLayer(marcadorInicio);
-  if (marcadorFin) mapaLeaflet.removeLayer(marcadorFin);
-  
-  const o = [t.latInicio, t.lonInicio],
-        a = [t.latFinal, t.lonFinal],
-        r = t.ruta && t.ruta.length > 1 ? t.ruta : [o, a];
-        
-  capaRuta = L.polyline(r, { color: "#101825", weight: 4, opacity: .85 }).addTo(mapaLeaflet);
-  marcadorInicio = L.circleMarker(o, { radius: 8, color: "#0e9e93", fillColor: "#0e9e93", fillOpacity: 1, weight: 2 }).bindTooltip("Origen", { permanent: false }).addTo(mapaLeaflet);
-  marcadorFin = L.circleMarker(a, { radius: 8, color: "#1e40af", fillColor: "#1e40af", fillOpacity: 1, weight: 2 }).bindTooltip("Destino", { permanent: false }).addTo(mapaLeaflet);
-  
-  mapaLeaflet.fitBounds(capaRuta.getBounds(), { padding: [30, 30] });
+    const t = registros.find(s => s.reclamo === e);
+    if (!t) return;
+    if (!t.latInicio || !t.lonInicio || !t.latFinal || !t.lonFinal) {
+        alert("Este reclamo no tiene coordenadas completas para trazar la ruta.");
+        return;
+    }
+    $("mapaVacio").style.display = "none";
+    $("mapa").style.display = "block";
+    $("mapaReadout").style.display = "flex";
+    $("roReclamo").textContent = t.reclamo;
+    $("roKm").textContent = t.km + " KM";
+    
+    if (mapaLeaflet) {
+        mapaLeaflet.invalidateSize();
+    } else {
+        mapaLeaflet = L.map("mapa", { scrollWheelZoom: false });
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap",
+            maxZoom: 19
+        }).addTo(mapaLeaflet);
+    }
+    
+    if (capaRuta) mapaLeaflet.removeLayer(capaRuta);
+    if (marcadorInicio) mapaLeaflet.removeLayer(marcadorInicio);
+    if (marcadorFin) mapaLeaflet.removeLayer(marcadorFin);
+    
+    const o = [t.latInicio, t.lonInicio],
+          a = [t.latFinal, t.lonFinal],
+          r = t.ruta && t.ruta.length > 1 ? t.ruta : [o, a];
+          
+    capaRuta = L.polyline(r, { color: "#101825", weight: 4, opacity: .85 }).addTo(mapaLeaflet);
+    marcadorInicio = L.circleMarker(o, { radius: 8, color: "#0e9e93", fillColor: "#0e9e93", fillOpacity: 1, weight: 2 }).bindTooltip("Origen", { permanent: false }).addTo(mapaLeaflet);
+    marcadorFin = L.circleMarker(a, { radius: 8, color: "#1e40af", fillColor: "#1e40af", fillOpacity: 1, weight: 2 }).bindTooltip("Destino", { permanent: false }).addTo(mapaLeaflet);
+    mapaLeaflet.fitBounds(capaRuta.getBounds(), { padding: [30, 30] });
 }
 
 function generarResumenPDF() {
-  if (!registros.length) return alert("No hay datos cargados. Haga clic en 'Cargar datos' primero.");
-  
-  const e = new window.jspdf.jsPDF({ orientation: "p", unit: "mm", format: "a4" }),
-        t = e.internal.pageSize.getWidth(),
-        o = $("resNoReporte").value || "01",
-        a = $("resFechaDesde").value,
-        r = $("resFechaHasta").value,
-        s = n => {
-          if (!n) return "";
-          const [A, f, h] = n.split("-");
-          return `${h}-${f}-${A}`;
-        };
-        
-  e.setFont("Helvetica", "bold");
-  e.setFontSize(10);
-  e.setTextColor(16, 24, 37);
-  e.text("REPORTE DE SINIESTRO PARA CALCULO DE TIEMPO EXTRAORDINARIO", 10, 12);
-  e.setFontSize(9);
-  e.text(`No. ${o}`, t - 10, 12, { align: "right" });
-  e.setFontSize(8.5);
-  e.text(`Del: ${s(a)} AL ${s(r)}`, 10, 17);
-  
-  const l = [...new Set(registros.map(n => n.asesor))],
-        g = {};
-  l.forEach(n => g[normalizarNombre(n)] = n);
-  
-  let u = ROSTER_ASESORES.map(n => ({
-    cod: n.cod,
-    nombre: n.nombre,
-    clave: g[normalizarNombre(n.nombre)] || null
-  }));
-  
-  const y = new Set(ROSTER_ASESORES.map(n => normalizarNombre(n.nombre)));
-  l.forEach(n => {
-    if (!y.has(normalizarNombre(n))) u.push({ cod: "", nombre: n, clave: n });
-  });
-  
-  let S = 0, m = 0, d = 0, v = 0;
-  const i = u.map(n => {
-    const A = n.clave ? registros.filter(D => D.asesor === n.clave) : [],
-          f = n.clave ? adicionalesAsesores[n.clave] || { ajustes: 0, inspecciones: 0 } : { ajustes: 0, inspecciones: 0 },
-          h = f.inspecciones || 0,
-          z = f.ajustes || 0,
-          O = A.filter(D => D.autorizado).length,
-          M = h * 30,
-          I = z * 100,
-          w = O * 300,
-          P = M + I + w;
+    if (!registros.length) return alert("No hay datos cargados. Haga clic en 'Cargar datos' primero.");
+    const e = new window.jspdf.jsPDF({ orientation: "p", unit: "mm", format: "a4" }),
+          t = e.internal.pageSize.getWidth(),
+          o = $("resNoReporte").value || "01",
+          a = $("resFechaDesde").value,
+          r = $("resFechaHasta").value,
+          s = n => {
+              if (!n) return "";
+              const [A, f, h] = n.split("-");
+              return `${h}-${f}-${A}`;
+          };
           
-    S += M; m += I; d += w; v += P;
-    return [n.cod, n.nombre, h, 30, M, z, 100, I, O, 300, w, P];
-  });
-  
-  i.push(["", "Total Interamericana", "", S, "", "", m, "", d, v]);
-  
-  const b = [1, 4, 7, 10],
-        T = .5;
-        
-  e.autoTable({
-    startY: 20,
-    head: [
-      ["Cod.", "NOMBRE", { content: "INSPECCIONES", colSpan: 3, styles: { halign: "center" } }, { content: "AJUSTE TALLERES", colSpan: 3, styles: { halign: "center" } }, { content: "EMERGENCIAS (>30KM)", colSpan: 3, styles: { halign: "center" } }, "TOTAL"],
-      ["", "La Interamericana De Ajustes, S.A:", "No.", "Monto", "Total", "No.", "Monto", "Total", "No.", "Monto", "Total", "PAGAR"]
-    ],
-    body: i,
-    theme: "grid",
-    styles: { font: "Helvetica", fontSize: 6.5, cellPadding: 1, halign: "center", valign: "middle", lineColor: [203, 213, 225], lineWidth: .1, textColor: [16, 24, 37] },
-    headStyles: { fillColor: [16, 24, 37], textColor: 255, fontStyle: "bold", fontSize: 6 },
-    columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 38, halign: "left" }, 2: { cellWidth: 8 }, 3: { cellWidth: 11 }, 4: { cellWidth: 12 }, 5: { cellWidth: 8 }, 6: { cellWidth: 11 }, 7: { cellWidth: 12 }, 8: { cellWidth: 8 }, 9: { cellWidth: 11 }, 10: { cellWidth: 12 }, 11: { cellWidth: 15 } },
-    didParseCell: function(n) {
-      if (n.section === "body" && n.row.index === i.length - 1) {
-        n.cell.styles.fontStyle = "bold";
-        n.cell.styles.fillColor = [240, 244, 248];
-      }
-    },
-    didDrawCell: function(n) {
-      if (b.includes(n.column.index)) {
-        e.setDrawColor(16, 24, 37);
-        e.setLineWidth(T);
-        const A = n.cell.x + n.cell.width;
-        e.line(A, n.cell.y, A, n.cell.y + n.cell.height);
-      }
-    },
-    margin: { left: 10, right: 10 }
-  });
-  
-  let c = e.lastAutoTable.finalY + 12;
-  const p = t / 2 + 4,
-        E = $("resElaboradoNombre").value || "",
-        x = $("resElaboradoCargo").value || "",
-        R = $("resAutNombre1").value || "",
-        N = $("resAutCargo1").value || "",
-        F = $("resAutNombre2").value || "",
-        C = $("resAutCargo2").value || "";
-        
-  e.setTextColor(16, 24, 37);
-  e.setFont("Helvetica", "bold");
-  e.setFontSize(8);
-  e.text("Elaborado por:", 15, c);
-  e.text("Autorizado por:", p, c);
-  e.setDrawColor(148, 163, 184);
-  e.line(15, c + 7, 95, c + 7);
-  e.line(p, c + 7, p + 80, c + 7);
-  e.setFont("Helvetica", "normal");
-  e.setFontSize(7.5);
-  e.text(E, 55, c + 11, { align: "center" });
-  e.text(x, 55, c + 15, { align: "center" });
-  e.text(R, p + 40, c + 11, { align: "center" });
-  e.text(N, p + 40, c + 15, { align: "center" });
-  
-  c += 26;
-  e.setFont("Helvetica", "bold");
-  e.setFontSize(8);
-  e.text("Autorizado por:", 15, c);
-  e.setDrawColor(148, 163, 184);
-  e.line(15, c + 7, 95, c + 7);
-  e.setFont("Helvetica", "normal");
-  e.setFontSize(7.5);
-  e.text(F, 55, c + 11, { align: "center" });
-  e.text(C, 55, c + 15, { align: "center" });
-  
-  e.save(`Resumen_Tiempo_Extraordinario_${a || "periodo"}.pdf`);
+    e.setFont("Helvetica", "bold");
+    e.setTextColor(16, 24, 37);
+    e.setFontSize(11);
+    e.text("REPORTE DE SINIESTROS PARA CÁLCULO DE TIEMPO EXTRAORDINARIO", 10, 12);
+    e.setFontSize(9);
+    e.text(`No. ${o}`, t - 10, 12, { align: "right" });
+    e.setFontSize(8.5);
+    e.text(`Del: ${s(a)} AL ${s(r)}`, 10, 17);
+    
+    const l = [...new Set(registros.map(n => n.asesor))], g = {};
+    l.forEach(n => g[normalizarNombre(n)] = n);
+    
+    let u = ROSTER_ASESORES.map(n => ({
+        cod: n.cod,
+        nombre: n.nombre,
+        clave: g[normalizarNombre(n.nombre)] || null
+    }));
+    
+    const y = new Set(ROSTER_ASESORES.map(n => normalizarNombre(n.nombre)));
+    l.forEach(n => {
+        if (!y.has(normalizarNombre(n))) u.push({ cod: "N/A", nombre: n, clave: n });
+    });
+    
+    let S = 0, m = 0, d = 0, v = 0;
+    const i = u.map(n => {
+        const A = n.clave ? registros.filter(D => D.asesor === n.clave) : [],
+              f = n.clave ? adicionalesAsesores[n.clave] || { ajustes: 0, inspecciones: 0 } : { ajustes: 0, inspecciones: 0 },
+              h = f.inspecciones || 0,
+              z = f.ajustes || 0,
+              O = A.filter(D => D.autorizado).length,
+              M = h * 30,
+              I = z * 100,
+              w = O * 300,
+              P = M + I + w;
+              
+        S += M; m += I; d += w; v += P;
+        return [n.cod, n.nombre, h, 30, M, z, 100, I, O, 300, w, P];
+    });
+    i.push(["", "Total Interamericana", "", "", S, "", "", m, "", "", d, v]);
+    
+    const b = [1, 4, 7, 10], T = 0.5;
+    e.autoTable({
+        startY: 20,
+        head: [
+            ["Cod.", "NOMBRE", { content: "INSPECCIONES", colSpan: 3, styles: { halign: "center" } }, { content: "AJUSTE TALLERES", colSpan: 3, styles: { halign: "center" } }, { content: "EMERGENCIAS (>30KM)", colSpan: 3, styles: { halign: "center" } }, "TOTAL"],
+            ["", "La Interamericana De Ajustes, SA:", "No.", "Monto", "Total", "No.", "Monto", "Total", "No.", "Monto", "Total", "PAGAR"]
+        ],
+        body: i,
+        theme: "grid",
+        styles: { font: "Helvetica", fontSize: 6.5, cellPadding: 1, halign: "center", valign: "middle", lineColor: [203, 213, 225], lineWidth: .1, textColor: [16, 24, 37] },
+        headStyles: { fillColor: [16, 24, 37], textColor: 255, fontStyle: "bold", fontSize: 6 },
+        columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 38, halign: "left" }, 2: { cellWidth: 8 }, 3: { cellWidth: 11 }, 4: { cellWidth: 12 }, 5: { cellWidth: 8 }, 6: { cellWidth: 11 }, 7: { cellWidth: 12 }, 8: { cellWidth: 8 }, 9: { cellWidth: 11 }, 10: { cellWidth: 12 }, 11: { cellWidth: 15 } },
+        didParseCell: function(n) {
+            if (n.section === "body" && n.row.index === i.length - 1) {
+                n.cell.styles.fontStyle = "bold";
+                n.cell.styles.fillColor = [240, 244, 248];
+            }
+        },
+        didDrawCell: function(n) {
+            if (b.includes(n.column.index)) {
+                e.setDrawColor(16, 24, 37);
+                e.setLineWidth(T);
+                const A = n.cell.x + n.cell.width;
+                e.line(A, n.cell.y, A, n.cell.y + n.cell.height);
+            }
+        },
+        margin: { left: 10, right: 10 }
+    });
+    
+    let c = e.lastAutoTable.finalY + 12;
+    const p = t / 2 + 4,
+          E = $("resElaboradoNombre").value || "",
+          x = $("resElaboradoCargo").value || "",
+          R = $("resAutNombre1").value || "",
+          N = $("resAutCargo1").value || "",
+          F = $("resAutNombre2").value || "",
+          C = $("resAutCargo2").value || "";
+          
+    e.setTextColor(16, 24, 37);
+    e.setFont("Helvetica", "bold");
+    e.setFontSize(8);
+    e.text("Elaborado por:", 15, c);
+    e.text("Autorizado por:", p, c);
+    e.setDrawColor(148, 163, 184);
+    e.line(15, c + 7, 95, c + 7);
+    e.line(p, c + 7, p + 80, c + 7);
+    e.setFont("Helvetica", "normal");
+    e.setFontSize(7.5);
+    e.text(E, 55, c + 11, { align: "center" });
+    e.text(x, 55, c + 15, { align: "center" });
+    e.text(R, p + 40, c + 11, { align: "center" });
+    e.text(N, p + 40, c + 15, { align: "center" });
+    
+    c += 26;
+    e.setFont("Helvetica", "bold");
+    e.setFontSize(8);
+    e.text("Autorizado por:", 15, c);
+    e.setDrawColor(148, 163, 184);
+    e.line(15, c + 7, 95, c + 7);
+    e.setFont("Helvetica", "normal");
+    e.setFontSize(7.5);
+    e.text(F, 55, c + 11, { align: "center" });
+    e.text(C, 55, c + 15, { align: "center" });
+    e.save(`Resumen_Tiempo_Extraordinario_${a || "periodo"}.pdf`);
 }
 
 function generarPDF() {
-  if (!asesorActual) return alert("Seleccione un asesor.");
-  const e = new window.jspdf.jsPDF({ orientation: "p", unit: "mm", format: "a4" });
-  escribirBloquePDF(e, asesorActual, registros.filter(t => t.asesor === asesorActual), adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 });
-  e.save(`Reporte_Unificado_${asesorActual}.pdf`);
+    if (!asesorActual) return alert("Seleccione un asesor.");
+    const e = new window.jspdf.jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+    escribirBloquePDF(e, asesorActual, registros.filter(t => t.asesor === asesorActual), adicionalesAsesores[asesorActual] || { ajustes: 0, inspecciones: 0 });
+    e.save(`Reporte_Unificado_${asesorActual}.pdf`);
 }
 
 function generarPDFTodos() {
-  if (!registros.length) return alert("No hay datos cargados.");
-  const e = new window.jspdf.jsPDF({ orientation: "p", unit: "mm", format: "a4" });
-  [...new Set(registros.map(o => o.asesor))].sort().forEach((o, a) => {
-    if (a > 0) e.addPage();
-    escribirBloquePDF(e, o, registros.filter(r => r.asesor === o), adicionalesAsesores[o] || { ajustes: 0, inspecciones: 0 });
-  });
-  e.save("Reporte_General_Ajustado.pdf");
+    if (!registros.length) return alert("No hay datos cargados.");
+    const e = new window.jspdf.jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+    [...new Set(registros.map(o => o.asesor))].sort().forEach((o, a) => {
+        if (a > 0) e.addPage();
+        escribirBloquePDF(e, o, registros.filter(r => r.asesor === o), adicionalesAsesores[o] || { ajustes: 0, inspecciones: 0 });
+    });
+    e.save("Reporte_General_Ajustado.pdf");
 }
 
 function escribirBloquePDF(e, t, o, a) {
-  const r = o.length ? o[0].umbralKm : obtenerUmbralKm(t).umbral;
-  e.setFont("Helvetica", "bold");
-  e.setFontSize(13);
-  e.setTextColor(16, 24, 37);
-  e.text("KM ASESORES DE EMERGENCIA", 10, 12);
-  e.setFontSize(8.5);
-  e.setFont("Helvetica", "normal");
-  e.setTextColor(100, 116, 139);
-  e.text("LIQUIDACIÓN DE GASTOS UNIFICADA", 10, 16);
-  e.setDrawColor(225, 230, 238);
-  e.line(10, 18, 200, 18);
-  e.setFont("Helvetica", "bold");
-  e.setFontSize(9.5);
-  e.setTextColor(16, 24, 37);
-  e.text(`ASESOR: ${t.toUpperCase()}`, 10, 23);
-  
-  let s = o.filter(i => i.autorizado),
-      l = o.filter(i => !i.autorizado),
-      g = [["No.", "Reclamo", "Fecha Sin.", "No. Póliza", "Asegurado", "Dirección Siniestro", "KM", "Monto"]],
-      u = s.map((i, b) => [b + 1, i.reclamo, i.fecha, i.poliza, i.asegurado, i.lugar, `${i.km} KM`, "Q300.00"]),
-      y = l.map((i, b) => [b + 1, i.reclamo, i.fecha, i.poliza, i.asegurado, `${i.lugar} (Motivo: ${i.motivo || `Kilometraje <= ${r}`})`, `${i.km} KM`, "Q0.00"]),
-      S = { font: "Helvetica", fontSize: 7, cellPadding: 1.2, overflow: "linebreak" };
-      
-  e.setFont("Helvetica", "bold");
-  e.setFontSize(8.5);
-  e.setTextColor(14, 158, 147);
-  e.text(`1. RECLAMOS AUTORIZADOS (>${r} KM)`, 10, 28);
-  
-  e.autoTable({
-    startY: 30,
-    head: g,
-    body: u.length ? u : [["-", "No hay reclamos autorizados.", "-", "-", "-", "-", "-", "-"]],
-    theme: "striped",
-    headStyles: { fillColor: [14, 158, 147], fontSize: 7, fontStyle: "bold" },
-    styles: S,
-    columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 18 }, 2: { cellWidth: 18 }, 3: { cellWidth: 20 }, 4: { cellWidth: 30 }, 5: { cellWidth: 68 }, 6: { cellWidth: 14 }, 7: { cellWidth: 14 } },
-    margin: { left: 10, right: 10 },
-    showHeader: "firstPage"
-  });
-  
-  let m = e.lastAutoTable.finalY + 4;
-  e.setFont("Helvetica", "bold");
-  e.setFontSize(8.5);
-  e.setTextColor(229, 56, 79);
-  e.text(`2. RECLAMOS RECHAZADOS (<=${r} KM)`, 10, m);
-  
-  e.autoTable({
-    startY: m + 2,
-    head: g,
-    body: y.length ? y : [["-", "No hay reclamos rechazados.", "-", "-", "-", "-", "-", "-"]],
-    theme: "striped",
-    headStyles: { fillColor: [229, 56, 79], fontSize: 7, fontStyle: "bold" },
-    styles: S,
-    columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 18 }, 2: { cellWidth: 18 }, 3: { cellWidth: 20 }, 4: { cellWidth: 30 }, 5: { cellWidth: 68 }, 6: { cellWidth: 14 }, 7: { cellWidth: 14 } },
-    margin: { left: 10, right: 10 },
-    showHeader: "firstPage"
-  });
-  
-  let d = e.lastAutoTable.finalY + 5;
-  e.setDrawColor(203, 213, 225);
-  e.setFillColor(248, 250, 252);
-  e.rect(10, d, 190, 26, "F");
-  e.setFontSize(8);
-  e.setFont("Helvetica", "normal");
-  e.setTextColor(51, 65, 85);
-  e.text(`Total Reclamos Autorizados:   ${s.length}`, 14, d + 5);
-  e.text(`Q ${(s.length * 300).toLocaleString()}.00`, 165, d + 5);
-  e.text(`Ajustes Extras Atendidos:     ${a.ajustes}  (Q100 c/u)`, 14, d + 11);
-  e.text(`Q ${(a.ajustes * 100).toLocaleString()}.00`, 165, d + 11);
-  e.text(`Inspecciones Realizadas:      ${a.inspecciones}  (Q30 c/u)`, 14, d + 17);
-  e.text(`Q ${(a.inspecciones * 30).toLocaleString()}.00`, 165, d + 17);
-  
-  e.setDrawColor(16, 24, 37);
-  e.line(14, d + 20, 196, d + 20);
-  e.setFontSize(9.5);
-  e.setFont("Helvetica", "bold");
-  e.setTextColor(30, 64, 175);
-  e.text("TOTAL NETO A PAGAR:", 14, d + 24);
-  
-  let v = s.length * 300 + a.ajustes * 100 + a.inspecciones * 30;
-  e.text(`Q ${v.toLocaleString()}.00`, 165, d + 24);
+    const r = o.length ? o[0].umbralKm : obtenerUmbralKm(t).umbral;
+    e.setFont("Helvetica", "bold");
+    e.setFontSize(13);
+    e.setTextColor(16, 24, 37);
+    e.text("KM ASESORES DE EMERGENCIA", 10, 12);
+    e.setFontSize(8.5);
+    e.setFont("Helvetica", "normal");
+    e.setTextColor(100, 116, 139);
+    e.text("LIQUIDACIÓN DE GASTOS UNIFICADA", 10, 16);
+    e.setDrawColor(225, 230, 238);
+    e.line(10, 18, 200, 18);
+    e.setFont("Helvetica", "bold");
+    e.setFontSize(9.5);
+    e.setTextColor(16, 24, 37);
+    e.text(`ASESOR: ${t.toUpperCase()}`, 10, 23);
+    
+    let s = o.filter(i => i.autorizado),
+        l = o.filter(i => !i.autorizado),
+        g = [["No.", "Reclamo", "Fecha Sin.", "No. Póliza", "Asegurado", "Dirección Siniestro", "KM", "Monto"]];
+        
+    let u = s.map((i, b) => [
+        b + 1, i.reclamo, i.fecha, i.poliza, i.asegurado, 
+        i.motivo ? `${i.lugar}\n(Motivo: ${i.motivo})` : i.lugar, 
+        `${i.km} KM`, "Q300.00"
+    ]);
+    
+    let y = l.map((i, b) => [
+        b + 1, i.reclamo, i.fecha, i.poliza, i.asegurado, 
+        `${i.lugar}\n(Motivo: ${i.motivo || `Kilometraje <= ${r}`})`, 
+        `${i.km} KM`, "Q0.00"
+    ]);
+    
+    let S = { font: "Helvetica", fontSize: 7, cellPadding: 1.2, overflow: "linebreak" };
+    e.setFont("Helvetica", "bold");
+    e.setFontSize(8.5);
+    e.setTextColor(14, 158, 147);
+    e.text(`1. RECLAMOS AUTORIZADOS (>${r} KM)`, 10, 28);
+    
+    e.autoTable({
+        startY: 30,
+        head: g,
+        body: u.length ? u : [["-", "No hay reclamos autorizados.", "-", "-", "-", "-", "-", "-"]],
+        theme: "striped",
+        headStyles: { fillColor: [14, 158, 147], fontSize: 7, fontStyle: "bold" },
+        styles: S,
+        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 18 }, 2: { cellWidth: 18 }, 3: { cellWidth: 20 }, 4: { cellWidth: 30 }, 5: { cellWidth: 68 }, 6: { cellWidth: 14 }, 7: { cellWidth: 14 } },
+        margin: { left: 10, right: 10 },
+        showHeader: "firstPage"
+    });
+    
+    let m = e.lastAutoTable.finalY + 4;
+    e.setFont("Helvetica", "bold");
+    e.setFontSize(8.5);
+    e.setTextColor(229, 56, 79);
+    e.text(`2. RECLAMOS RECHAZADOS (<=${r} KM)`, 10, m);
+    
+    e.autoTable({
+        startY: m + 2,
+        head: g,
+        body: y.length ? y : [["-", "No hay reclamos rechazados.", "-", "-", "-", "-", "-", "-"]],
+        theme: "striped",
+        headStyles: { fillColor: [229, 56, 79], fontSize: 7, fontStyle: "bold" },
+        styles: S,
+        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 18 }, 2: { cellWidth: 18 }, 3: { cellWidth: 20 }, 4: { cellWidth: 30 }, 5: { cellWidth: 68 }, 6: { cellWidth: 14 }, 7: { cellWidth: 14 } },
+        margin: { left: 10, right: 10 },
+        showHeader: "firstPage"
+    });
+    
+    let d = e.lastAutoTable.finalY + 5;
+    e.setDrawColor(203, 213, 225);
+    e.setFillColor(248, 250, 252);
+    e.rect(10, d, 190, 26, "F");
+    e.setFontSize(8);
+    e.setFont("Helvetica", "normal");
+    e.setTextColor(51, 65, 85);
+    e.text(`Total Reclamos Autorizados: ${s.length}`, 14, d + 5);
+    e.text(`Q ${(s.length * 300).toLocaleString()}.00`, 165, d + 5);
+    e.text(`Ajustes Extras Atendidos: ${a.ajustes} (Q100 c/u)`, 14, d + 11);
+    e.text(`Q ${(a.ajustes * 100).toLocaleString()}.00`, 165, d + 11);
+    e.text(`Inspecciones Realizadas: ${a.inspecciones} (Q30 c/u)`, 14, d + 17);
+    e.text(`Q ${(a.inspecciones * 30).toLocaleString()}.00`, 165, d + 17);
+    e.setDrawColor(16, 24, 37);
+    e.line(14, d + 20, 196, d + 20);
+    e.setFontSize(9.5);
+    e.setFont("Helvetica", "bold");
+    e.setTextColor(30, 64, 175);
+    e.text("TOTAL NETO A PAGAR:", 14, d + 24);
+    let v = s.length * 300 + a.ajustes * 100 + a.inspecciones * 30;
+    e.text(`Q ${v.toLocaleString()}.00`, 165, d + 24);
+}
+
+// ==========================================
+// MÓDULO DE PERSISTENCIA (LOCALSTORAGE)
+// ==========================================
+function guardarEstadoLocal() {
+    const reclamosModificados = registros
+        .filter(r => r.tipo === "Manual")
+        .map(r => ({
+            reclamo: r.reclamo,
+            autorizado: r.autorizado,
+            motivo: r.motivo
+        }));
+    localStorage.setItem('km_reclamos_modificados', JSON.stringify(reclamosModificados));
+    localStorage.setItem('km_ajustes_asesores', JSON.stringify(adicionalesAsesores));
+}
+
+function restaurarEstadoLocal() {
+    const reclamosGuardados = JSON.parse(localStorage.getItem('km_reclamos_modificados')) || [];
+    const ajustesGuardados = JSON.parse(localStorage.getItem('km_ajustes_asesores')) || {};
+
+    for (const asesor in ajustesGuardados) {
+        adicionalesAsesores[asesor] = ajustesGuardados[asesor];
+    }
+
+    reclamosGuardados.forEach(guardado => {
+        let reclamoActual = registros.find(r => r.reclamo === guardado.reclamo);
+        if (reclamoActual) {
+            reclamoActual.autorizado = guardado.autorizado;
+            reclamoActual.motivo = guardado.motivo;
+            reclamoActual.tipo = "Manual"; 
+        }
+    });
+}
+
+function limpiarEstadoLocal() {
+    if(confirm("⚠️ ¿Estás seguro de borrar todas las revisiones manuales y empezar de cero?")) {
+        localStorage.removeItem('km_reclamos_modificados');
+        localStorage.removeItem('km_ajustes_asesores');
+        location.reload(); 
+    }
 }
 </script>
 </body>
 </html>
-
